@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free CV Builder - Create Your Professional Resume</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-file-alt"></i> Free CV Builder</h1>
+            <p>Create Your Professional Resume in Minutes</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Form Section -->
+            <div class="form-section">
+                <div class="form-card">
+                    <h2><i class="fas fa-user"></i> Personal Information</h2>
+                    <div class="form-group">
+                        <label for="fullName">Full Name *</label>
+                        <input type="text" id="fullName" placeholder="Enter your full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="jobTitle">Job Title *</label>
+                        <input type="text" id="jobTitle" placeholder="e.g., Software Engineer, Graphic Designer">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="email">Email *</label>
+                            <input type="email" id="email" placeholder="your.email@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone</label>
+                            <input type="tel" id="phone" placeholder="+92 300 1234567">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="location">Location</label>
+                            <input type="text" id="location" placeholder="City, Country">
+                        </div>
+                        <div class="form-group">
+                            <label for="website">Website/Portfolio</label>
+                            <input type="url" id="website" placeholder="https://yourwebsite.com">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="summary">Professional Summary</label>
+                        <textarea id="summary" rows="4" placeholder="Write a brief summary about yourself..."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <h2><i class="fas fa-briefcase"></i> Work Experience</h2>
+                    <div id="experienceContainer"></div>
+                    <button type="button" class="add-btn" onclick="addExperience()">
+                        <i class="fas fa-plus"></i> Add Experience
+                    </button>
+                </div>
+
+                <div class="form-card">
+                    <h2><i class="fas fa-graduation-cap"></i> Education</h2>
+                    <div id="educationContainer"></div>
+                    <button type="button" class="add-btn" onclick="addEducation()">
+                        <i class="fas fa-plus"></i> Add Education
+                    </button>
+                </div>
+
+                <div class="form-card">
+                    <h2><i class="fas fa-cogs"></i> Skills</h2>
+                    <div class="form-group">
+                        <label for="skills">Enter your skills (separate with commas)</label>
+                        <textarea id="skills" rows="3" placeholder="e.g., JavaScript, Python, Project Management, Communication"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <h2><i class="fas fa-language"></i> Languages</h2>
+                    <div id="languageContainer"></div>
+                    <button type="button" class="add-btn" onclick="addLanguage()">
+                        <i class="fas fa-plus"></i> Add Language
+                    </button>
+                </div>
+
+                <div class="action-buttons">
+                    <button type="button" class="btn-primary" onclick="generateCV()">
+                        <i class="fas fa-eye"></i> Preview CV
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="downloadPDF()">
+                        <i class="fas fa-download"></i> Download PDF
+                    </button>
+                    <button type="button" class="btn-outline" onclick="clearForm()">
+                        <i class="fas fa-redo"></i> Clear All
+                    </button>
+                </div>
+            </div>
+
+            <!-- Preview Section -->
+            <div class="preview-section">
+                <div class="preview-header">
+                    <h3><i class="fas fa-file-pdf"></i> CV Preview</h3>
+                    <div class="theme-selector">
+                        <label>Theme:</label>
+                        <select id="themeSelect" onchange="changeTheme()">
+                            <option value="modern">Modern Blue</option>
+                            <option value="classic">Classic Black</option>
+                            <option value="professional">Professional Green</option>
+                            <option value="creative">Creative Purple</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="cvPreview" class="cv-preview">
+                    <div class="empty-state">
+                        <i class="fas fa-file-alt"></i>
+                        <p>Your CV preview will appear here</p>
+                        <p class="hint">Fill in the form and click "Preview CV"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2026 Free CV Builder | Made with <i class="fas fa-heart"></i> by Abid</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
