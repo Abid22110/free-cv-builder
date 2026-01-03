@@ -2,97 +2,16 @@
 let experienceCount = 0;
 let educationCount = 0;
 let languageCount = 0;
-let isUserAuthenticated = false;
 let currentStyle = 'style1'; // Default style
-
-function isStaticHostingDemo() {
-    // GitHub Pages (and similar static hosting) cannot run the Express API.
-    // Detect common cases and gracefully fall back to demo mode.
-    return (
-        window.location.hostname.endsWith('github.io') ||
-        window.location.protocol === 'file:'
-    );
-}
-
-function setDemoModeUI() {
-    isUserAuthenticated = true;
-    const userNameEl = document.getElementById('userName');
-    if (userNameEl) {
-        userNameEl.textContent = 'Demo Mode (No Login)';
-    }
-    const logoutBtn = document.querySelector('button[onclick="logout()"]');
-    if (logoutBtn) {
-        logoutBtn.style.display = 'none';
-    }
-}
 
 // Check authentication on page load
 window.addEventListener('DOMContentLoaded', async () => {
-    await checkAuthentication();
     initializeStyleGrid();
     addExperience();
     addEducation();
     addLanguage();
     loadSampleData();
 });
-
-// Check if user is authenticated
-async function checkAuthentication() {
-    try {
-        // Use relative URL so it works both at domain root and under subpaths (e.g., /repo-name/ on GitHub Pages)
-        const response = await fetch('api/check-auth');
-        if (!response.ok) {
-            // If API isn't reachable (e.g., static hosting), fall back to demo mode.
-            if (isStaticHostingDemo()) {
-                setDemoModeUI();
-                return;
-            }
-            throw new Error(`Auth check failed with status ${response.status}`);
-        }
-        const data = await response.json();
-        
-        if (data.authenticated) {
-            isUserAuthenticated = true;
-            const userNameEl = document.getElementById('userName');
-            if (userNameEl) {
-                userNameEl.textContent = `Welcome, ${data.user.name}!`;
-            }
-        } else {
-            if (isStaticHostingDemo()) {
-                setDemoModeUI();
-            } else {
-                window.location.href = 'login.html';
-            }
-        }
-    } catch (error) {
-        console.error('Auth check failed:', error);
-        if (isStaticHostingDemo()) {
-            setDemoModeUI();
-        } else {
-            window.location.href = 'login.html';
-        }
-    }
-}
-
-// Logout function
-async function logout() {
-    if (isStaticHostingDemo()) {
-        // No backend session on static hosting.
-        window.location.href = 'index.html';
-        return;
-    }
-    if (confirm('Are you sure you want to logout?')) {
-        try {
-            const response = await fetch('api/logout', { method: 'POST' });
-            if (response.ok) {
-                window.location.href = 'login.html';
-            }
-        } catch (error) {
-            console.error('Logout failed:', error);
-            alert('Logout failed. Please try again.');
-        }
-    }
-}
 
 // Load sample data
 function loadSampleData() {
@@ -568,12 +487,6 @@ function downloadPDF() {
     
     if (!preview.querySelector('.cv-header')) {
         alert('Please generate a CV preview first!');
-        return;
-    }
-    
-    if (!isUserAuthenticated) {
-        alert('Please login to download your CV!');
-        window.location.href = '/login.html';
         return;
     }
     

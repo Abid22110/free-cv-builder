@@ -51,17 +51,7 @@ function saveUsers(users) {
     fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
 }
 
-// Authentication middleware
-function isAuthenticated(req, res, next) {
-    if (req.session.userId) {
-        return next();
-    }
-    // Return 401 for API calls, redirect for page requests
-    if (req.path.startsWith('/api/')) {
-        return res.status(401).json({ message: 'Authentication required' });
-    }
-    res.redirect('/login.html');
-}
+// Auth has been removed from the UI; keep the server public.
 
 // API Routes
 
@@ -171,24 +161,18 @@ app.get('/api/check-auth', (req, res) => {
     }
 });
 
-// Protected routes
-app.get('/', isAuthenticated, (req, res) => {
+// Main app (public)
+app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Public routes (login and signup pages)
+// Legacy routes (login/signup removed) -> redirect to the app
 app.get('/login.html', (req, res) => {
-    if (req.session.userId) {
-        return res.redirect('/');
-    }
-    res.sendFile(path.join(__dirname, 'login.html'));
+    res.redirect('/');
 });
 
 app.get('/signup.html', (req, res) => {
-    if (req.session.userId) {
-        return res.redirect('/');
-    }
-    res.sendFile(path.join(__dirname, 'signup.html'));
+    res.redirect('/');
 });
 
 // Start server

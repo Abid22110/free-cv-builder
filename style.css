@@ -460,6 +460,9 @@ input:hover, textarea:hover, select:hover {
     min-height: 600px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
+    color: var(--cv-text, #1e293b);
+    border-top: 6px solid var(--cv-primary, #2563eb);
+    background-image: linear-gradient(180deg, var(--cv-accent, #dbeafe) 0px, var(--white) 220px);
 }
 
 .cv-preview:hover {
