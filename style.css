@@ -1159,7 +1159,7 @@ footer i.fa-heart {
         padding: 0;
     }
     
-    .cv-preview {
+    #cvPreview.cv-preview {
         border: none;
         box-shadow: none;
         padding: 12px;
@@ -1187,6 +1187,12 @@ footer i.fa-heart {
     /* Layout-10 sets white text for on-screen gradient; override for print */
     .cv-preview.layout-10 .cv-header {
         background: white !important;
+    }
+    .cv-preview.layout-10 .cv-name,
+    .cv-preview.layout-10 .cv-job-title,
+    .cv-preview.layout-10 .cv-contact,
+    .cv-preview.layout-10 .cv-contact i {
+        color: var(--cv-text, #111827) !important;
     }
     .cv-preview.layout-10 .cv-theme-badge {
         background: white !important;
