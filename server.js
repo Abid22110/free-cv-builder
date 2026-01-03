@@ -19,8 +19,12 @@ app.use(session({
     }
 }));
 
-// Serve static files
-app.use(express.static(__dirname));
+// Serve static files (CSS, JS, images) without authentication
+app.use('/style.css', express.static(path.join(__dirname, 'style.css')));
+app.use('/app.js', express.static(path.join(__dirname, 'app.js')));
+app.use(express.static(__dirname, { 
+    index: false // Don't serve index.html automatically
+}));
 
 // Users database file
 const USERS_FILE = path.join(__dirname, 'users.json');
@@ -44,6 +48,10 @@ function saveUsers(users) {
 function isAuthenticated(req, res, next) {
     if (req.session.userId) {
         return next();
+    }
+    // Return 401 for API calls, redirect for page requests
+    if (req.path.startsWith('/api/')) {
+        return res.status(401).json({ message: 'Authentication required' });
     }
     res.redirect('/login.html');
 }

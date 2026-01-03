@@ -21,7 +21,10 @@ async function checkAuthentication() {
         
         if (data.authenticated) {
             isUserAuthenticated = true;
-            document.getElementById('userName').textContent = `Welcome, ${data.user.name}!`;
+            const userNameEl = document.getElementById('userName');
+            if (userNameEl) {
+                userNameEl.textContent = `Welcome, ${data.user.name}!`;
+            }
         } else {
             window.location.href = '/login.html';
         }
