@@ -2,14 +2,49 @@
 let experienceCount = 0;
 let educationCount = 0;
 let languageCount = 0;
+let isUserAuthenticated = false;
 
-// Initialize with one of each
-window.addEventListener('DOMContentLoaded', () => {
+// Check authentication on page load
+window.addEventListener('DOMContentLoaded', async () => {
+    await checkAuthentication();
     addExperience();
     addEducation();
     addLanguage();
     loadSampleData();
 });
+
+// Check if user is authenticated
+async function checkAuthentication() {
+    try {
+        const response = await fetch('/api/check-auth');
+        const data = await response.json();
+        
+        if (data.authenticated) {
+            isUserAuthenticated = true;
+            document.getElementById('userName').textContent = `Welcome, ${data.user.name}!`;
+        } else {
+            window.location.href = '/login.html';
+        }
+    } catch (error) {
+        console.error('Auth check failed:', error);
+        window.location.href = '/login.html';
+    }
+}
+
+// Logout function
+async function logout() {
+    if (confirm('Are you sure you want to logout?')) {
+        try {
+            const response = await fetch('/api/logout', { method: 'POST' });
+            if (response.ok) {
+                window.location.href = '/login.html';
+            }
+        } catch (error) {
+            console.error('Logout failed:', error);
+            alert('Logout failed. Please try again.');
+        }
+    }
+}
 
 // Load sample data
 function loadSampleData() {
@@ -324,6 +359,12 @@ function downloadPDF() {
     
     if (!preview.querySelector('.cv-header')) {
         alert('Please generate a CV preview first!');
+        return;
+    }
+    
+    if (!isUserAuthenticated) {
+        alert('Please login to download your CV!');
+        window.location.href = '/login.html';
         return;
     }
     
