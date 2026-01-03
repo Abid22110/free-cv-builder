@@ -212,6 +212,64 @@ input, textarea, select {
     background: var(--white);
 }
 
+.skills-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.skills-add-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    border: 2px solid var(--border-color);
+    background: var(--white);
+    color: var(--primary-color);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+}
+
+.skills-add-btn:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.skills-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.skill-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(37, 99, 235, 0.08);
+    border: 1px solid rgba(37, 99, 235, 0.22);
+    color: var(--text-dark);
+    font-weight: 700;
+    font-size: 0.92rem;
+}
+
+.skill-chip button {
+    border: none;
+    background: transparent;
+    color: var(--danger);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
 input:focus, textarea:focus, select:focus {
     outline: none;
     border-color: var(--primary-color);
@@ -584,10 +642,6 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 }
 
 .cv-header-top {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
     margin-bottom: 10px;
 }
 
@@ -624,6 +678,68 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
     flex-direction: column;
     align-items: center;
 }
+
+/* ===== Template Layout Modes (real differences) ===== */
+.cv-preview.layout-1 .cv-header { text-align: center; }
+.cv-preview.layout-1 .cv-header-top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+.cv-preview.layout-1 .cv-contact { justify-content: center; }
+
+.cv-preview.layout-2 .cv-header { text-align: left; }
+.cv-preview.layout-2 .cv-header-top {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 16px;
+}
+.cv-preview.layout-2 .cv-header-text { align-items: flex-start; }
+.cv-preview.layout-2 .cv-contact { justify-content: flex-start; }
+
+.cv-preview.layout-3 .cv-header { text-align: left; }
+.cv-preview.layout-3 .cv-header-top {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 16px;
+}
+.cv-preview.layout-3 .cv-header-text { align-items: flex-start; }
+.cv-preview.layout-3 .cv-photo { grid-column: 2; }
+.cv-preview.layout-3 .cv-contact { justify-content: flex-start; }
+
+.cv-preview.layout-4 .cv-header { text-align: left; border-bottom: none; padding-bottom: 10px; }
+.cv-preview.layout-4 .cv-header-top {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 16px;
+}
+.cv-preview.layout-4 .cv-section-title {
+    border-bottom: none;
+    background: var(--cv-accent, #dbeafe);
+    padding: 10px 12px;
+    border-radius: 10px;
+}
+.cv-preview.layout-4 .cv-header-text { align-items: flex-start; }
+.cv-preview.layout-4 .cv-contact { justify-content: flex-start; }
+
+.cv-preview.layout-5 .cv-header { text-align: left; }
+.cv-preview.layout-5 .cv-header-top {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 16px;
+}
+.cv-preview.layout-5 .cv-section-title {
+    border-bottom: none;
+    border-left: 6px solid var(--cv-primary, #2563eb);
+    padding-left: 12px;
+}
+.cv-preview.layout-5 .cv-header-text { align-items: flex-start; }
+.cv-preview.layout-5 .cv-contact { justify-content: flex-start; }
 
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -719,8 +835,8 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 }
 
 .cv-skills {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
 }
 
@@ -731,6 +847,15 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
     border-radius: 20px;
     font-size: 0.9rem;
     transition: all 0.3s ease;
+}
+
+.cv-signature {
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top: 2px dashed var(--cv-secondary, #60a5fa);
+    text-align: right;
+    font-weight: 700;
+    color: var(--cv-text, #1e293b);
 }
 
 .cv-skill-tag:hover {
@@ -814,6 +939,10 @@ footer i.fa-heart {
 
 /* Print Styles */
 @media print {
+    @page {
+        size: A4;
+        margin: 10mm;
+    }
     body {
         background: white;
         padding: 0;
@@ -836,9 +965,19 @@ footer i.fa-heart {
     .cv-preview {
         border: none;
         box-shadow: none;
-        padding: 20px;
+        padding: 12px;
         min-height: auto;
+        background-image: none;
     }
+
+    .cv-name { font-size: 2rem; }
+    .cv-job-title { font-size: 1.1rem; margin-bottom: 10px; }
+    .cv-section { margin-bottom: 14px; }
+    .cv-section-title { font-size: 1.2rem; margin-bottom: 10px; padding-bottom: 6px; }
+    .cv-contact { gap: 10px; font-size: 0.9rem; }
+    .cv-item-title { font-size: 1rem; }
+    .cv-item-description { font-size: 0.95rem; }
+    .cv-skill-tag { padding: 5px 12px; font-size: 0.85rem; }
 }
 
 /* Custom scrollbar */

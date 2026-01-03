@@ -4,6 +4,7 @@ let educationCount = 0;
 let languageCount = 0;
 let currentStyle = 'style1'; // Default style
 let profilePhotoDataUrl = '';
+let skillsList = [];
 
 function openExternalLink(event, url) {
     if (event && typeof event.preventDefault === 'function') {
@@ -83,7 +84,92 @@ window.addEventListener('DOMContentLoaded', async () => {
     addEducation();
     addLanguage();
     setupProfilePhotoUpload();
+    setupSkillsChips();
 });
+
+function getLayoutClassForStyle(styleId) {
+    const match = String(styleId).match(/(\d+)/);
+    const n = match ? Number(match[1]) : 1;
+    // 5 layout groups across 50 templates
+    const group = ((Math.max(1, Math.min(50, n)) - 1) % 5) + 1;
+    return `layout-${group}`;
+}
+
+function setupSkillsChips() {
+    const input = document.getElementById('skillsInput');
+    const hidden = document.getElementById('skills');
+    if (!input || !hidden) return;
+
+    const seed = String(hidden.value || '').trim();
+    if (seed) {
+        skillsList = seed.split(',').map(s => s.trim()).filter(Boolean);
+    }
+
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            addSkillsFromInput();
+        }
+    });
+
+    input.addEventListener('blur', () => {
+        addSkillsFromInput();
+    });
+
+    renderSkillsChips();
+}
+
+function addSkillsFromInput() {
+    const input = document.getElementById('skillsInput');
+    if (!input) return;
+
+    const raw = String(input.value || '').trim();
+    if (!raw) return;
+
+    const parts = raw
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+
+    for (const skill of parts) {
+        const normalized = skill.replace(/\s+/g, ' ');
+        if (!normalized) continue;
+        if (!skillsList.some(s => s.toLowerCase() === normalized.toLowerCase())) {
+            skillsList.push(normalized);
+        }
+    }
+
+    input.value = '';
+    renderSkillsChips();
+    syncSkillsHiddenValue();
+}
+
+function removeSkill(skill) {
+    const target = String(skill || '').toLowerCase();
+    skillsList = skillsList.filter(s => s.toLowerCase() !== target);
+    renderSkillsChips();
+    syncSkillsHiddenValue();
+}
+
+function syncSkillsHiddenValue() {
+    const hidden = document.getElementById('skills');
+    if (!hidden) return;
+    hidden.value = skillsList.join(', ');
+}
+
+function renderSkillsChips() {
+    const container = document.getElementById('skillsChips');
+    if (!container) return;
+
+    container.innerHTML = skillsList.map(skill => `
+        <span class="skill-chip">
+            ${skill}
+            <button type="button" aria-label="Remove ${skill}" onclick="removeSkill('${skill.replace(/'/g, "\\'")}')">
+                <i class="fas fa-times"></i>
+            </button>
+        </span>
+    `).join('');
+}
 
 function setupProfilePhotoUpload() {
     const input = document.getElementById('profilePhoto');
@@ -384,7 +470,7 @@ function selectStyle(styleId) {
     
     // Update preview with selected style
     const preview = document.getElementById('cvPreview');
-    preview.className = `cv-preview ${styleId}`;
+    preview.className = `cv-preview ${styleId} ${getLayoutClassForStyle(styleId)}`;
     // Trigger a small animation to make the change feel "alive".
     preview.classList.remove('is-animating');
     void preview.offsetWidth;
@@ -433,7 +519,8 @@ function generateCV() {
     const location = document.getElementById('location').value;
     const website = document.getElementById('website').value;
     const summary = document.getElementById('summary').value;
-    const skills = document.getElementById('skills').value;
+    const signatureName = document.getElementById('signatureName') ? document.getElementById('signatureName').value : '';
+    const skills = document.getElementById('skills') ? document.getElementById('skills').value : '';
 
     if (!fullName || !jobTitle || !email) {
         alert('Please fill in required fields: Full Name, Job Title, and Email');
@@ -562,8 +649,10 @@ function generateCV() {
     }
 
     // Skills
-    if (skills) {
-        const skillsArray = skills.split(',').map(s => s.trim()).filter(s => s);
+    {
+        const skillsArray = (skillsList && skillsList.length > 0)
+            ? skillsList
+            : String(skills).split(',').map(s => s.trim()).filter(s => s);
         if (skillsArray.length > 0) {
             cvHTML += `
                 <div class="cv-section">
@@ -613,11 +702,15 @@ function generateCV() {
     preview.innerHTML = cvHTML;
     
     // Apply current style
-    preview.className = `cv-preview ${currentStyle}`;
+    preview.className = `cv-preview ${currentStyle} ${getLayoutClassForStyle(currentStyle)}`;
 
     preview.classList.remove('is-animating');
     void preview.offsetWidth;
     preview.classList.add('is-animating');
+
+    if (signatureName && String(signatureName).trim()) {
+        preview.insertAdjacentHTML('beforeend', `<div class="cv-signature">${String(signatureName).trim()}</div>`);
+    }
 }
 
 // Download PDF
@@ -642,6 +735,13 @@ function clearForm() {
         });
 
         profilePhotoDataUrl = '';
+
+        skillsList = [];
+        const skillsInput = document.getElementById('skillsInput');
+        if (skillsInput) skillsInput.value = '';
+        const skillsHidden = document.getElementById('skills');
+        if (skillsHidden) skillsHidden.value = '';
+        renderSkillsChips();
         
         // Clear dynamic sections
         document.getElementById('experienceContainer').innerHTML = '';
