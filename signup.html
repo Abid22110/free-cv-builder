@@ -178,7 +178,10 @@
             padding: 15px;
             background: linear-gradient(135deg, #2563eb, #3b82f6);
             color: white;
-            border: none;cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -186,6 +189,8 @@
             margin-top: 10px;
             position: relative;
             overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .btn-signup::before {
@@ -204,11 +209,6 @@
         .btn-signup:hover::before {
             width: 400px;
             height: 400px;
-        }
-
-        .btn-signup:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4
         }
 
         .btn-signup:hover {
@@ -356,6 +356,13 @@
     </div>
 
     <script>
+        function isStaticHostingDemo() {
+            return (
+                window.location.hostname.endsWith('github.io') ||
+                window.location.protocol === 'file:'
+            );
+        }
+
         const passwordInput = document.getElementById('password');
         const strengthBar = document.getElementById('strengthBar');
 
@@ -409,7 +416,15 @@
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
 
             try {
-                const response = await fetch('/api/signup', {
+                if (isStaticHostingDemo()) {
+                    errorMessage.textContent = 'GitHub Pages demo: login/signup is disabled. Open the main app directly.';
+                    errorMessage.classList.add('show');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+                    return;
+                }
+
+                const response = await fetch('api/signup', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

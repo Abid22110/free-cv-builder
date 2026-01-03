@@ -312,6 +312,13 @@
     </div>
 
     <script>
+        function isStaticHostingDemo() {
+            return (
+                window.location.hostname.endsWith('github.io') ||
+                window.location.protocol === 'file:'
+            );
+        }
+
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -325,7 +332,15 @@
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
 
             try {
-                const response = await fetch('/api/login', {
+                if (isStaticHostingDemo()) {
+                    errorMessage.textContent = 'GitHub Pages demo: login/signup is disabled. Open the main app directly.';
+                    errorMessage.classList.add('show');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+                    return;
+                }
+
+                const response = await fetch('api/login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

@@ -4,13 +4,20 @@ const bcrypt = require('bcryptjs');
 const path = require('path');
 const fs = require('fs');
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Behind most cloud providers (Render/Railway/etc.) you are behind a proxy.
+// This helps Express correctly detect secure requests when needed.
+if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1);
+}
+
 app.use(session({
-    secret: 'cv-builder-secret-key-2026',
+    secret: process.env.SESSION_SECRET || 'cv-builder-secret-key-2026',
     resave: false,
     saveUninitialized: false,
     cookie: { 

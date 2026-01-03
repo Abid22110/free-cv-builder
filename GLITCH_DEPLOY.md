@@ -44,38 +44,26 @@ Glitch automatically detects:
 
 ### **Step 4: Fix File Structure** (Important!)
 
-Glitch editor me:
+Is repo me files already **ROOT** me hain, so normally is step ki zaroorat nahi.
 
-1. Left sidebar me files dikhenge
-2. Ye files **ROOT me honi chahiye**:
-   - `server.js`
-   - `package.json`
-   - `index.html`
-   - `login.html`
-   - `signup.html`
-   - `style.css`
-   - `app.js`
-
-**Problem:** Sab files `cv-builder/` folder me hain!
-
-**Solution:** Files ko root me move karna padega (Next step dekho)
+Root me ye files honi chahiye:
+- `server.js`
+- `package.json`
+- `index.html`
+- `login.html`
+- `signup.html`
+- `style.css`
+- `app.js`
 
 ---
 
-### **Step 5: File Structure Fix** (Manual)
+### **Step 5: Run Check (Optional)**
 
-**Option A: Glitch Editor Me** (Recommended)
-1. Terminal open karo (bottom me)
-2. Run:
-   ```bash
-   mv cv-builder/* .
-   rm -rf cv-builder
-   ```
+Glitch automatically `npm install` karta hai.
 
-**Option B: GitHub Se Fix** (Better)
-1. Files ko `cv-builder/` se bahar move karo
-2. Git push karo
-3. Glitch refresh karega
+If app start na ho:
+1. Glitch project → **Tools** → **Logs**
+2. Error copy karke yahan bhej do
 
 ---
 

@@ -116,7 +116,7 @@ Environment: NODE_ENV=production
 
 ### Running Locally:
 ```bash
-cd cv-builder
+cd free-cv-builder
 npm install
 npm start
 # or
@@ -137,7 +137,7 @@ npm start
 ## 📁 Project Structure
 
 ```
-cv-builder/
+free-cv-builder/
 ├── index.html           # Main CV builder page
 ├── login.html          # Login page
 ├── signup.html         # Signup page
@@ -159,7 +159,7 @@ When deploying, make sure to set:
 
 ```
 NODE_ENV=production
-PORT=3000 (or auto-assigned)
+PORT=(auto-assigned by host)
 SESSION_SECRET=your-random-secret-here
 ```
 

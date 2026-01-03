@@ -76,6 +76,12 @@ Key: NODE_ENV
 Value: production
 ```
 
+**Also add (recommended):**
+```
+Key: SESSION_SECRET
+Value: (any long random string)
+```
+
 To add:
 1. Click "Advanced" button
 2. Click "Add Environment Variable"
@@ -149,7 +155,7 @@ Your app will **sleep after 15 minutes** of no visitors.
 
 ### Issue 2: "Application Failed to Start"
 **Solution**: Check if PORT is set correctly
-- Our server uses: `process.env.PORT || 3000` ✅
+- Our server uses: `process.env.PORT || 3001` ✅
 - Render automatically sets PORT ✅
 
 ### Issue 3: "Cannot find users.json"

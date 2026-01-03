@@ -78,7 +78,7 @@ A professional, modern CV/Resume builder web application with **50+ premium temp
 
 ```bash
 # Navigate to directory
-cd cv-builder
+cd free-cv-builder
 
 # Install dependencies
 npm install
@@ -91,6 +91,8 @@ npm start
 ```
 
 **Access**: http://localhost:3001
+
+On Windows, use `npm start` (the `start.sh` script is for bash/Linux).
 
 ### Test Account
 ```
