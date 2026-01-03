@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Free CV Builder</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cpath d='M20 14h16l8 8v28a4 4 0 0 1-4 4H20a4 4 0 0 1-4-4V18a4 4 0 0 1 4-4Z' fill='white' opacity='0.95'/%3E%3Cpath d='M36 14v10h10' fill='%23bfdbfe'/%3E%3Cpath d='M24 30h16M24 38h16M24 46h12' stroke='%232563eb' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -332,14 +333,6 @@
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
 
             try {
-                if (isStaticHostingDemo()) {
-                    errorMessage.textContent = 'GitHub Pages demo: login/signup is disabled. Open the main app directly.';
-                    errorMessage.classList.add('show');
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
-                    return;
-                }
-
                 const response = await fetch('api/login', {
                     method: 'POST',
                     headers: {
@@ -359,7 +352,11 @@
                     submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
                 }
             } catch (error) {
-                errorMessage.textContent = 'Network error. Please try again.';
+                if (isStaticHostingDemo()) {
+                    errorMessage.textContent = 'You are on GitHub Pages (static). Login works only on your server host URL (Glitch/Render). Open the deployed server URL and try again.';
+                } else {
+                    errorMessage.textContent = 'Network error. Please try again.';
+                }
                 errorMessage.classList.add('show');
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
