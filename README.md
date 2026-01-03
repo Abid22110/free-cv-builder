@@ -1,6 +1,6 @@
 # 🎓 Free CV Builder v2.0
 
-A professional, modern CV/Resume builder web application with **50+ premium templates**, authentication, and cloud deployment ready!
+A professional, modern CV/Resume builder web application with **100+ premium templates**, no login required, and deployment ready!
 
 **GitHub**: https://github.com/Abid22110/free-cv-builder  
 **Live Demo**: Coming Soon (Deploy instructions below)
@@ -9,7 +9,7 @@ A professional, modern CV/Resume builder web application with **50+ premium temp
 
 ## ✨ Key Features
 
-### 🎨 **50+ Premium CV Templates**
+### 🎨 **100+ Premium CV Templates**
 - Unique color schemes and designs
 - Categories: Modern, Professional, Creative, Technical, Premium, etc.
 - Real-time template switching
@@ -59,7 +59,7 @@ A professional, modern CV/Resume builder web application with **50+ premium temp
 
 ## 📋 What's Included
 
-✅ 50 unique CV templates with custom styling  
+✅ 100 unique CV templates with custom styling  
 ✅ User authentication system (Login/Signup)  
 ✅ Modern animations and hover effects  
 ✅ Mobile-responsive design  
@@ -142,7 +142,7 @@ git push heroku main
 
 - **Lines of Code**: 1000+
 - **CSS Animations**: 10+
-- **CV Templates**: 50
+- **CV Templates**: 100
 - **User Reviews**: 50+
 - **Features**: 15+
 - **Responsive Breakpoints**: 5
@@ -159,7 +159,7 @@ cv-builder/
 ├── signup.html         # Registration page
 ├── app.js              # Frontend logic (templates, reviews)
 ├── server.js           # Express backend (auth, API)
-├── style.css           # All styling (50 templates)
+├── style.css           # All styling (100 templates)
 ├── package.json        # Dependencies
 ├── ecosystem.config.js # PM2 config
 ├── start.sh            # Startup script
@@ -185,7 +185,7 @@ cv-builder/
 
 ### 3. **Select a Template**
 - Click "Show All Styles"
-- Choose from 50 templates
+- Choose from 100 templates
 - See instant preview
 
 ### 4. **Preview & Download**

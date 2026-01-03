@@ -22,10 +22,25 @@ function openExternalLink(event, url) {
     }
 }
 
+function stripLeadingIconToken(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+
+    const parts = raw.split(/\s+/);
+    if (parts.length < 2) return raw;
+
+    const firstToken = parts[0];
+    // Strip only if the first token looks like an icon/emoji (no letters/numbers).
+    if (!/[A-Za-z0-9]/.test(firstToken)) {
+        return parts.slice(1).join(' ').trim() || raw;
+    }
+    return raw;
+}
+
 function getTemplateDisplayName(template) {
     const raw = String(template?.name || '').trim();
     // If name starts with an emoji/icon, strip it so browsers don't show "?".
-    return raw.replace(/^\S+\s+/, '').trim() || raw;
+    return stripLeadingIconToken(raw) || raw;
 }
 
 function getTemplateNumber(template) {
@@ -40,7 +55,7 @@ function getCurrentTemplateMeta() {
         return { name: 'Template', category: 'Default', iconClass: 'fa-star' };
     }
 
-    const displayName = String(template.name).replace(/^\S+\s+/, '');
+    const displayName = stripLeadingIconToken(template.name);
     const iconByCategory = {
         Modern: 'fa-bolt',
         Classic: 'fa-landmark',
@@ -104,8 +119,8 @@ window.addEventListener('DOMContentLoaded', async () => {
 function getLayoutClassForStyle(styleId) {
     const match = String(styleId).match(/(\d+)/);
     const n = match ? Number(match[1]) : 1;
-    // 5 layout groups across 50 templates
-    const group = ((Math.max(1, Math.min(50, n)) - 1) % 5) + 1;
+    // 10 layout groups across 100 templates
+    const group = ((Math.max(1, Math.min(100, n)) - 1) % 10) + 1;
     return `layout-${group}`;
 }
 
@@ -388,7 +403,7 @@ function removeItem(id) {
     }
 }
 
-// 50 CV Template Styles with descriptions
+// 100 CV Template Styles with descriptions
 const cvTemplates = [
     { id: 'style1', name: '🔵 Modern Blue', category: 'Modern' },
     { id: 'style2', name: '⚫ Classic Black', category: 'Classic' },
@@ -439,13 +454,68 @@ const cvTemplates = [
     { id: 'style47', name: '🌸 Blossom', category: 'Elegant' },
     { id: 'style48', name: '🔮 Mystical', category: 'Creative' },
     { id: 'style49', name: '👑 Royal', category: 'Premium' },
-    { id: 'style50', name: '🌊 Wave', category: 'Professional' }
+    { id: 'style50', name: '🌊 Wave', category: 'Professional' },
+
+    { id: 'style51', name: 'Minimal Slate', category: 'Minimalist' },
+    { id: 'style52', name: 'Executive Navy', category: 'Executive' },
+    { id: 'style53', name: 'Modern Teal', category: 'Modern' },
+    { id: 'style54', name: 'Creative Coral', category: 'Creative' },
+    { id: 'style55', name: 'Premium Onyx', category: 'Premium' },
+    { id: 'style56', name: 'Academic Ink', category: 'Academic' },
+    { id: 'style57', name: 'Warm Copper', category: 'Warm' },
+    { id: 'style58', name: 'Cool Glacier', category: 'Cool' },
+    { id: 'style59', name: 'Bold Crimson', category: 'Bold' },
+    { id: 'style60', name: 'Business Steel', category: 'Business' },
+
+    { id: 'style61', name: 'Elegant Rose', category: 'Elegant' },
+    { id: 'style62', name: 'Technical Cyan', category: 'Technical' },
+    { id: 'style63', name: 'Corporate Graphite', category: 'Corporate' },
+    { id: 'style64', name: 'Bright Citrus', category: 'Bright' },
+    { id: 'style65', name: 'Dark Aurora', category: 'Dark' },
+    { id: 'style66', name: 'Luxury Emerald', category: 'Luxury' },
+    { id: 'style67', name: 'International Blue', category: 'International' },
+    { id: 'style68', name: 'Media Magenta', category: 'Media' },
+    { id: 'style69', name: 'Financial Olive', category: 'Financial' },
+    { id: 'style70', name: 'Medical Mint', category: 'Medical' },
+
+    { id: 'style71', name: 'Legal Burgundy', category: 'Legal' },
+    { id: 'style72', name: 'Marketing Sunset', category: 'Marketing' },
+    { id: 'style73', name: 'Digital Neon', category: 'Digital' },
+    { id: 'style74', name: 'Startup Lime', category: 'Startup' },
+    { id: 'style75', name: 'Natural Forest', category: 'Natural' },
+    { id: 'style76', name: 'Vibrant Violet', category: 'Vibrant' },
+    { id: 'style77', name: 'Classic Charcoal', category: 'Classic' },
+    { id: 'style78', name: 'Professional Azure', category: 'Professional' },
+    { id: 'style79', name: 'Playful Bubblegum', category: 'Playful' },
+    { id: 'style80', name: 'Elegant Pearl', category: 'Elegant' },
+
+    { id: 'style81', name: 'Modern Indigo', category: 'Modern' },
+    { id: 'style82', name: 'Executive Maroon', category: 'Executive' },
+    { id: 'style83', name: 'Technical Midnight', category: 'Technical' },
+    { id: 'style84', name: 'Corporate Cobalt', category: 'Corporate' },
+    { id: 'style85', name: 'Bold Electric', category: 'Bold' },
+    { id: 'style86', name: 'Premium Champagne', category: 'Premium' },
+    { id: 'style87', name: 'Academic Stone', category: 'Academic' },
+    { id: 'style88', name: 'Business Ocean', category: 'Business' },
+    { id: 'style89', name: 'Cool Ice', category: 'Cool' },
+    { id: 'style90', name: 'Warm Sand', category: 'Warm' },
+
+    { id: 'style91', name: 'Creative Plum', category: 'Creative' },
+    { id: 'style92', name: 'Bright Sky', category: 'Bright' },
+    { id: 'style93', name: 'Dark Carbon', category: 'Dark' },
+    { id: 'style94', name: 'Luxury Sapphire', category: 'Luxury' },
+    { id: 'style95', name: 'International Sandstone', category: 'International' },
+    { id: 'style96', name: 'Media Studio', category: 'Media' },
+    { id: 'style97', name: 'Financial Carbon', category: 'Financial' },
+    { id: 'style98', name: 'Medical Clean', category: 'Medical' },
+    { id: 'style99', name: 'Legal Night', category: 'Legal' },
+    { id: 'style100', name: 'Minimal Paper', category: 'Minimalist' }
 ];
 
 // 50+ User Reviews/Testimonials
 const userReviews = [
     { name: 'Ahmed Hassan', role: 'Software Engineer', rating: 5, text: 'Amazing CV builder! Created my CV in just 5 minutes. Got 3 job offers within a week!', img: '👨‍💼' },
-    { name: 'Fatima Khan', role: 'Marketing Manager', rating: 5, text: 'The 50 templates are incredible. My CV looks so professional now. Highly recommended!', img: '👩‍💼' },
+    { name: 'Fatima Khan', role: 'Marketing Manager', rating: 5, text: 'The 100 templates are incredible. My CV looks so professional now. Highly recommended!', img: '👩‍💼' },
     { name: 'Muhammad Ali', role: 'Data Scientist', rating: 5, text: 'Best free CV tool I\'ve used. The design options are amazing and it\'s super easy to use.', img: '👨‍💻' },
     { name: 'Sarah Johnson', role: 'Graphic Designer', rating: 5, text: 'Finally found a CV builder that matches my creative style! Love the modern templates.', img: '👩‍🎨' },
     { name: 'Hassan Raza', role: 'Business Analyst', rating: 5, text: 'Professional, fast, and completely free. This is exactly what I was looking for!', img: '👨‍💼' },
@@ -457,7 +527,7 @@ const userReviews = [
     { name: 'Karim Hassan', role: 'Web Developer', rating: 5, text: 'The animations and transitions are smooth. Clearly built by developers for developers.', img: '👨‍💻' },
     { name: 'Layla Ahmed', role: 'Product Manager', rating: 5, text: 'Got my dream job! This CV tool definitely helped me stand out from other candidates.', img: '👩‍💼' },
     { name: 'Mahmoud Sharif', role: 'Senior Developer', rating: 5, text: 'Finally a free tool that doesn\'t compromise on quality. Absolutely stellar!', img: '👨‍💻' },
-    { name: 'Nora Hassan', role: 'Finance Analyst', rating: 5, text: 'The 50 templates made it so easy to find one that matches my personality and style.', img: '👩‍💼' },
+    { name: 'Nora Hassan', role: 'Finance Analyst', rating: 5, text: 'The 100 templates made it so easy to find one that matches my personality and style.', img: '👩‍💼' },
     { name: 'Tariq Mohamed', role: 'Systems Architect', rating: 5, text: 'Best CV builder I\'ve ever used. The code quality is impressive too!', img: '👨‍💻' },
     { name: 'Salma Khan', role: 'Business Owner', rating: 5, text: 'Recommended to all my employees. They all created amazing CVs in minutes!', img: '👩‍💼' },
     { name: 'Ibrahim Ali', role: 'Mobile Developer', rating: 5, text: 'The responsive design is perfect. Works great on all devices. Impressive work!', img: '👨‍💻' },
@@ -489,7 +559,7 @@ const userReviews = [
     { name: 'Carmen Ahmed', role: 'Manager', rating: 5, text: 'The best tool for creating professional CVs. 100% satisfied!', img: '👩‍💼' },
     { name: 'Darren Khan', role: 'Engineer', rating: 5, text: 'Incredibly intuitive. My mom even managed to create a CV without help!', img: '👨‍💻' },
     { name: 'Elina Hassan', role: 'Consultant', rating: 5, text: 'Professional results in minutes. This tool is a game changer!', img: '👩‍💼' },
-    { name: 'Fabrice Ahmed', role: 'Analyst', rating: 5, text: 'The 50 templates offer something for every industry and style preference.', img: '👨‍💼' },
+    { name: 'Fabrice Ahmed', role: 'Analyst', rating: 5, text: 'The 100 templates offer something for every industry and style preference.', img: '👨‍💼' },
     { name: 'Gloria Khan', role: 'Specialist', rating: 5, text: 'Best investment of my time. Got the job I always wanted!', img: '👩‍💼' },
     { name: 'Henry Hassan', role: 'Executive', rating: 5, text: 'Outstanding quality and completely free. Simply remarkable!', img: '👨‍💻' },
     { name: 'Iris Ahmed', role: 'Professional', rating: 5, text: 'This tool proves that free doesn\'t mean compromising on quality.', img: '👩‍💼' },
