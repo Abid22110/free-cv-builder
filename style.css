@@ -310,6 +310,16 @@ input:hover, textarea:hover, select:hover {
     gap: 8px;
 }
 
+.btn-primary:active, .btn-secondary:active, .btn-outline:active, .style-toggle-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.btn-primary:focus-visible, .btn-secondary:focus-visible, .btn-outline:focus-visible, .style-toggle-btn:focus-visible,
+input:focus-visible, textarea:focus-visible, select:focus-visible {
+    outline: 3px solid rgba(96, 165, 250, 0.65);
+    outline-offset: 2px;
+}
+
 .btn-primary {
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: var(--white);
@@ -579,6 +589,24 @@ input:hover, textarea:hover, select:hover {
     align-items: center;
     gap: 12px;
     margin-bottom: 10px;
+}
+
+.cv-theme-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    margin-top: 10px;
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: var(--cv-text, #1e293b);
+    border: 2px solid var(--cv-primary, #2563eb);
+    background: linear-gradient(135deg, var(--cv-accent, #dbeafe), rgba(255, 255, 255, 0.9));
+}
+
+.cv-theme-icon {
+    color: var(--cv-primary, #2563eb);
 }
 
 .cv-photo {

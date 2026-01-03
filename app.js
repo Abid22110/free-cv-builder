@@ -5,6 +5,77 @@ let languageCount = 0;
 let currentStyle = 'style1'; // Default style
 let profilePhotoDataUrl = '';
 
+function openExternalLink(event, url) {
+    if (event && typeof event.preventDefault === 'function') {
+        event.preventDefault();
+    }
+
+    try {
+        const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+        if (!newWindow) {
+            window.location.href = url;
+        }
+    } catch {
+        window.location.href = url;
+    }
+}
+
+function getCurrentTemplateMeta() {
+    const template = cvTemplates.find(t => t.id === currentStyle);
+    if (!template) {
+        return { name: 'Template', category: 'Default', iconClass: 'fa-star' };
+    }
+
+    const displayName = String(template.name).replace(/^\S+\s+/, '');
+    const iconByCategory = {
+        Modern: 'fa-bolt',
+        Classic: 'fa-landmark',
+        Professional: 'fa-briefcase',
+        Creative: 'fa-palette',
+        Executive: 'fa-user-tie',
+        Warm: 'fa-fire',
+        Elegant: 'fa-gem',
+        Technical: 'fa-microchip',
+        Marketing: 'fa-bullhorn',
+        Corporate: 'fa-building',
+        Minimalist: 'fa-minus',
+        Digital: 'fa-wifi',
+        Startup: 'fa-rocket',
+        Premium: 'fa-crown',
+        Business: 'fa-chart-line',
+        Academic: 'fa-graduation-cap',
+        Natural: 'fa-leaf',
+        Cool: 'fa-snowflake',
+        Bold: 'fa-bolt',
+        Luxury: 'fa-gem',
+        Playful: 'fa-face-smile',
+        Dark: 'fa-moon',
+        Bright: 'fa-sun',
+        Financial: 'fa-coins',
+        Medical: 'fa-briefcase-medical',
+        Legal: 'fa-scale-balanced',
+        Media: 'fa-photo-film',
+        International: 'fa-globe',
+        Vibrant: 'fa-wand-magic-sparkles'
+    };
+
+    return {
+        name: displayName,
+        category: template.category,
+        iconClass: iconByCategory[template.category] || 'fa-star'
+    };
+}
+
+function updateCvThemeBadge() {
+    const badgeName = document.querySelector('.cv-theme-name');
+    const badgeIcon = document.querySelector('.cv-theme-icon');
+    if (!badgeName || !badgeIcon) return;
+
+    const meta = getCurrentTemplateMeta();
+    badgeName.textContent = meta.name;
+    badgeIcon.className = `fas ${meta.iconClass} cv-theme-icon`;
+}
+
 // Check authentication on page load
 window.addEventListener('DOMContentLoaded', async () => {
     initializeStyleGrid();
@@ -322,6 +393,8 @@ function selectStyle(styleId) {
     // Show notification
     const templateName = cvTemplates.find(t => t.id === styleId).name;
     console.log('Selected template:', templateName);
+
+    updateCvThemeBadge();
 }
 
 // Toggle Reviews Modal
@@ -371,6 +444,14 @@ function generateCV() {
         ? `<img class="cv-photo" src="${profilePhotoDataUrl}" alt="Profile photo">`
         : '';
 
+    const themeMeta = getCurrentTemplateMeta();
+    const badgeHTML = `
+        <div class="cv-theme-badge" title="${themeMeta.category} template">
+            <i class="fas ${themeMeta.iconClass} cv-theme-icon"></i>
+            <span class="cv-theme-name">${themeMeta.name}</span>
+        </div>
+    `;
+
     let cvHTML = `
         <div class="cv-header">
             <div class="cv-header-top">
@@ -378,6 +459,7 @@ function generateCV() {
                 <div class="cv-header-text">
                     <h1 class="cv-name">${fullName}</h1>
                     <p class="cv-job-title">${jobTitle}</p>
+                    ${badgeHTML}
                 </div>
             </div>
             <div class="cv-contact">
@@ -532,6 +614,10 @@ function generateCV() {
     
     // Apply current style
     preview.className = `cv-preview ${currentStyle}`;
+
+    preview.classList.remove('is-animating');
+    void preview.offsetWidth;
+    preview.classList.add('is-animating');
 }
 
 // Download PDF
