@@ -3,10 +3,12 @@ let experienceCount = 0;
 let educationCount = 0;
 let languageCount = 0;
 let isUserAuthenticated = false;
+let currentStyle = 'style1'; // Default style
 
 // Check authentication on page load
 window.addEventListener('DOMContentLoaded', async () => {
     await checkAuthentication();
+    initializeStyleGrid();
     addExperience();
     addEducation();
     addLanguage();
@@ -174,11 +176,92 @@ function removeItem(id) {
     }
 }
 
-// Change Theme
-function changeTheme() {
-    const theme = document.getElementById('themeSelect').value;
+// 50 CV Template Styles with descriptions
+const cvTemplates = [
+    { id: 'style1', name: '🔵 Modern Blue', category: 'Modern' },
+    { id: 'style2', name: '⚫ Classic Black', category: 'Classic' },
+    { id: 'style3', name: '💚 Professional Green', category: 'Professional' },
+    { id: 'style4', name: '🟣 Creative Purple', category: 'Creative' },
+    { id: 'style5', name: '🔴 Executive Red', category: 'Executive' },
+    { id: 'style6', name: '🟠 Warm Orange', category: 'Warm' },
+    { id: 'style7', name: '🌊 Ocean Blue', category: 'Professional' },
+    { id: 'style8', name: '🏙️ Urban Dark', category: 'Modern' },
+    { id: 'style9', name: '✨ Elegant Gold', category: 'Elegant' },
+    { id: 'style10', name: '🎨 Artistic Pink', category: 'Creative' },
+    { id: 'style11', name: '📊 Data Analyst', category: 'Technical' },
+    { id: 'style12', name: '🎯 Marketing Pro', category: 'Marketing' },
+    { id: 'style13', name: '💻 Tech Geek', category: 'Technical' },
+    { id: 'style14', name: '👔 Corporate', category: 'Corporate' },
+    { id: 'style15', name: '🌟 Star Bright', category: 'Modern' },
+    { id: 'style16', name: '🎭 Minimalist', category: 'Minimalist' },
+    { id: 'style17', name: '🌈 Rainbow', category: 'Creative' },
+    { id: 'style18', name: '📱 Digital', category: 'Digital' },
+    { id: 'style19', name: '🚀 Startup', category: 'Startup' },
+    { id: 'style20', name: '🏆 Premium', category: 'Premium' },
+    { id: 'style21', name: '💼 Business', category: 'Business' },
+    { id: 'style22', name: '🎓 Academic', category: 'Academic' },
+    { id: 'style23', name: '🌿 Natural', category: 'Natural' },
+    { id: 'style24', name: '❄️ Icy Blue', category: 'Cool' },
+    { id: 'style25', name: '🔥 Hot Red', category: 'Bold' },
+    { id: 'style26', name: '💎 Diamond', category: 'Luxury' },
+    { id: 'style27', name: '🎪 Colorful', category: 'Playful' },
+    { id: 'style28', name: '📚 Scholar', category: 'Academic' },
+    { id: 'style29', name: '🌙 Midnight', category: 'Dark' },
+    { id: 'style30', name: '☀️ Sunshine', category: 'Bright' },
+    { id: 'style31', name: '🎸 Creative Artist', category: 'Creative' },
+    { id: 'style32', name: '⚙️ Engineer', category: 'Technical' },
+    { id: 'style33', name: '💰 Financial', category: 'Financial' },
+    { id: 'style34', name: '🏥 Medical', category: 'Medical' },
+    { id: 'style35', name: '⚖️ Legal', category: 'Legal' },
+    { id: 'style36', name: '🎬 Media', category: 'Media' },
+    { id: 'style37', name: '🌐 Global', category: 'International' },
+    { id: 'style38', name: '🔐 Security', category: 'Technical' },
+    { id: 'style39', name: '🎯 Focus', category: 'Minimalist' },
+    { id: 'style40', name: '🌺 Tropical', category: 'Vibrant' },
+    { id: 'style41', name: '📈 Growth', category: 'Business' },
+    { id: 'style42', name: '🎪 Festive', category: 'Playful' },
+    { id: 'style43', name: '🏅 Champion', category: 'Premium' },
+    { id: 'style44', name: '🌌 Galaxy', category: 'Modern' },
+    { id: 'style45', name: '🎨 Painter', category: 'Creative' },
+    { id: 'style46', name: '⚡ Lightning', category: 'Bold' },
+    { id: 'style47', name: '🌸 Blossom', category: 'Elegant' },
+    { id: 'style48', name: '🔮 Mystical', category: 'Creative' },
+    { id: 'style49', name: '👑 Royal', category: 'Premium' },
+    { id: 'style50', name: '🌊 Wave', category: 'Professional' }
+];
+
+// Initialize style grid
+function initializeStyleGrid() {
+    const grid = document.getElementById('styleGrid');
+    grid.innerHTML = cvTemplates.map(template => `
+        <div class="style-card" onclick="selectStyle('${template.id}')" title="${template.category}">
+            <div class="style-card-inner">
+                <div class="style-preview-icon">${template.name.charAt(0)}</div>
+                <div class="style-card-name">${template.name.substring(2)}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Toggle style grid
+function toggleStyleGrid() {
+    const container = document.getElementById('styleGridContainer');
+    container.style.display = container.style.display === 'none' ? 'block' : 'none';
+}
+
+// Select style and regenerate CV
+function selectStyle(styleId) {
+    currentStyle = styleId;
+    const container = document.getElementById('styleGridContainer');
+    container.style.display = 'none';
+    
+    // Update preview with selected style
     const preview = document.getElementById('cvPreview');
-    preview.className = `cv-preview ${theme}`;
+    preview.className = `cv-preview ${styleId}`;
+    
+    // Show notification
+    const templateName = cvTemplates.find(t => t.id === styleId).name;
+    console.log('Selected template:', templateName);
 }
 
 // Generate CV
@@ -351,9 +434,8 @@ function generateCV() {
     const preview = document.getElementById('cvPreview');
     preview.innerHTML = cvHTML;
     
-    // Apply current theme
-    const theme = document.getElementById('themeSelect').value;
-    preview.className = `cv-preview ${theme}`;
+    // Apply current style
+    preview.className = `cv-preview ${currentStyle}`;
 }
 
 // Download PDF
