@@ -204,6 +204,55 @@ function setupProfilePhotoUpload() {
     const input = document.getElementById('profilePhoto');
     if (!input) return;
 
+    const resizeImageFileToDataUrl = (file, { maxDimension = 720, quality = 0.86 } = {}) => {
+        return new Promise((resolve, reject) => {
+            try {
+                const url = URL.createObjectURL(file);
+                const img = new Image();
+                img.onload = () => {
+                    try {
+                        const width = img.naturalWidth || img.width;
+                        const height = img.naturalHeight || img.height;
+
+                        const scale = Math.min(1, maxDimension / Math.max(width, height));
+                        const targetW = Math.max(1, Math.round(width * scale));
+                        const targetH = Math.max(1, Math.round(height * scale));
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = targetW;
+                        canvas.height = targetH;
+
+                        const ctx = canvas.getContext('2d', { alpha: false });
+                        if (!ctx) {
+                            URL.revokeObjectURL(url);
+                            reject(new Error('Canvas not supported'));
+                            return;
+                        }
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, targetW, targetH);
+                        ctx.drawImage(img, 0, 0, targetW, targetH);
+
+                        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        URL.revokeObjectURL(url);
+                        resolve(dataUrl);
+                    } catch (e) {
+                        URL.revokeObjectURL(url);
+                        reject(e);
+                    }
+                };
+                img.onerror = () => {
+                    URL.revokeObjectURL(url);
+                    reject(new Error('Failed to load image'));
+                };
+                img.src = url;
+            } catch (e) {
+                reject(e);
+            }
+        });
+    };
+
     input.addEventListener('change', () => {
         const file = input.files && input.files[0];
         if (!file) {
@@ -227,15 +276,26 @@ function setupProfilePhotoUpload() {
             return;
         }
 
-        const reader = new FileReader();
-        reader.onload = () => {
-            profilePhotoDataUrl = String(reader.result || '');
-            const preview = document.getElementById('cvPreview');
-            if (preview && preview.querySelector('.cv-header')) {
-                generateCV();
-            }
-        };
-        reader.readAsDataURL(file);
+        resizeImageFileToDataUrl(file)
+            .then((dataUrl) => {
+                profilePhotoDataUrl = String(dataUrl || '');
+                const preview = document.getElementById('cvPreview');
+                if (preview && preview.querySelector('.cv-header')) {
+                    generateCV();
+                }
+            })
+            .catch(() => {
+                // Fallback: use FileReader if resize fails.
+                const reader = new FileReader();
+                reader.onload = () => {
+                    profilePhotoDataUrl = String(reader.result || '');
+                    const preview = document.getElementById('cvPreview');
+                    if (preview && preview.querySelector('.cv-header')) {
+                        generateCV();
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
     });
 }
 
@@ -885,8 +945,20 @@ function downloadPDF() {
         return;
     }
     
-    // Simple print dialog - user can save as PDF
-    window.print();
+    // Ensure the latest layout is painted before invoking print (helps avoid blank PDFs).
+    preview.classList.remove('is-animating');
+    const doPrint = () => {
+        try {
+            window.print();
+        } finally {
+            // Re-enable animations for the UI after print.
+            preview.classList.remove('is-animating');
+        }
+    };
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(doPrint);
+    });
 }
 
 // Clear Form

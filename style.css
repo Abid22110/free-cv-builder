@@ -1135,31 +1135,23 @@ footer i.fa-heart {
     body {
         background: white;
         padding: 0;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
 
-    /* Print ONLY the CV preview */
-    body * {
-        visibility: hidden !important;
-    }
-
-    #cvPreview, #cvPreview * {
-        visibility: visible !important;
+    /* Print ONLY the CV preview (avoid absolute/visibility hacks that can print blank) */
+    header, footer, .form-section, .preview-header, .style-grid-container, .stats-section, .reviews-section {
+        display: none !important;
     }
 
     #cvPreview {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
+        position: static !important;
+        width: 100% !important;
     }
     
     .container {
         box-shadow: none;
         border-radius: 0;
-    }
-    
-    .form-section, .preview-header, header, footer, .style-grid-container, .stats-section, .reviews-section {
-        display: none !important;
     }
     
     .main-content {
@@ -1172,7 +1164,36 @@ footer i.fa-heart {
         box-shadow: none;
         padding: 12px;
         min-height: auto;
-        background-image: none;
+        background-image: none !important;
+        background: white !important;
+    }
+
+    /* Ensure text is visible even if browser doesn't print backgrounds */
+    #cvPreview {
+        --cv-text: #111827 !important;
+    }
+    .cv-preview,
+    .cv-preview * {
+        color: var(--cv-text, #111827) !important;
+        text-shadow: none !important;
+    }
+    .cv-section-title {
+        color: var(--cv-primary, #111827) !important;
+    }
+    .cv-item-company, .cv-item-school {
+        color: var(--cv-primary, #111827) !important;
+    }
+
+    /* Layout-10 sets white text for on-screen gradient; override for print */
+    .cv-preview.layout-10 .cv-header {
+        background: white !important;
+    }
+    .cv-preview.layout-10 .cv-theme-badge {
+        background: white !important;
+        border-color: var(--cv-primary, #111827) !important;
+    }
+    .cv-preview.layout-10 .cv-theme-icon {
+        color: var(--cv-primary, #111827) !important;
     }
 
     .cv-preview {
