@@ -188,6 +188,19 @@ label {
     color: var(--text-dark);
 }
 
+.form-group.required label::after {
+    content: ' *';
+    color: var(--danger);
+}
+
+.form-group.required input {
+    background: linear-gradient(180deg, rgba(37, 99, 235, 0.06), rgba(255, 255, 255, 0));
+}
+
+input::placeholder, textarea::placeholder {
+    color: rgba(100, 116, 139, 0.85);
+}
+
 input, textarea, select {
     width: 100%;
     padding: 12px;
@@ -463,6 +476,11 @@ input:hover, textarea:hover, select:hover {
     color: var(--cv-text, #1e293b);
     border-top: 6px solid var(--cv-primary, #2563eb);
     background-image: linear-gradient(180deg, var(--cv-accent, #dbeafe) 0px, var(--white) 220px);
+    will-change: transform;
+}
+
+.cv-preview.is-animating {
+    animation: fadeIn 0.35s ease-out;
 }
 
 .cv-preview:hover {
@@ -553,6 +571,39 @@ input:hover, textarea:hover, select:hover {
     border-bottom: 3px solid var(--cv-primary, #2563eb);
     margin-bottom: 25px;
     animation: slideInLeft 0.5s ease-out;
+}
+
+.cv-header-top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.cv-photo {
+    width: 110px;
+    height: 110px;
+    border-radius: 999px;
+    object-fit: cover;
+    border: 4px solid var(--cv-accent, #dbeafe);
+    box-shadow: var(--shadow-md);
+    background: var(--white);
+}
+
+.cv-header-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }
 
 .cv-name {

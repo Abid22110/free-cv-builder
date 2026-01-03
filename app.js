@@ -3,6 +3,7 @@ let experienceCount = 0;
 let educationCount = 0;
 let languageCount = 0;
 let currentStyle = 'style1'; // Default style
+let profilePhotoDataUrl = '';
 
 // Check authentication on page load
 window.addEventListener('DOMContentLoaded', async () => {
@@ -10,8 +11,47 @@ window.addEventListener('DOMContentLoaded', async () => {
     addExperience();
     addEducation();
     addLanguage();
-    loadSampleData();
+    setupProfilePhotoUpload();
 });
+
+function setupProfilePhotoUpload() {
+    const input = document.getElementById('profilePhoto');
+    if (!input) return;
+
+    input.addEventListener('change', () => {
+        const file = input.files && input.files[0];
+        if (!file) {
+            profilePhotoDataUrl = '';
+            return;
+        }
+
+        if (!file.type || !file.type.startsWith('image/')) {
+            alert('Please select an image file.');
+            input.value = '';
+            profilePhotoDataUrl = '';
+            return;
+        }
+
+        // Keep it lightweight for GitHub Pages + printing.
+        const maxBytes = 2 * 1024 * 1024; // 2MB
+        if (file.size > maxBytes) {
+            alert('Image is too large. Please use an image under 2MB.');
+            input.value = '';
+            profilePhotoDataUrl = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            profilePhotoDataUrl = String(reader.result || '');
+            const preview = document.getElementById('cvPreview');
+            if (preview && preview.querySelector('.cv-header')) {
+                generateCV();
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+}
 
 // Load sample data
 function loadSampleData() {
@@ -274,6 +314,10 @@ function selectStyle(styleId) {
     // Update preview with selected style
     const preview = document.getElementById('cvPreview');
     preview.className = `cv-preview ${styleId}`;
+    // Trigger a small animation to make the change feel "alive".
+    preview.classList.remove('is-animating');
+    void preview.offsetWidth;
+    preview.classList.add('is-animating');
     
     // Show notification
     const templateName = cvTemplates.find(t => t.id === styleId).name;
@@ -323,10 +367,19 @@ function generateCV() {
         return;
     }
 
+    const photoHTML = profilePhotoDataUrl
+        ? `<img class="cv-photo" src="${profilePhotoDataUrl}" alt="Profile photo">`
+        : '';
+
     let cvHTML = `
         <div class="cv-header">
-            <h1 class="cv-name">${fullName}</h1>
-            <p class="cv-job-title">${jobTitle}</p>
+            <div class="cv-header-top">
+                ${photoHTML}
+                <div class="cv-header-text">
+                    <h1 class="cv-name">${fullName}</h1>
+                    <p class="cv-job-title">${jobTitle}</p>
+                </div>
+            </div>
             <div class="cv-contact">
                 ${email ? `<div class="cv-contact-item"><i class="fas fa-envelope"></i> ${email}</div>` : ''}
                 ${phone ? `<div class="cv-contact-item"><i class="fas fa-phone"></i> ${phone}</div>` : ''}
@@ -501,6 +554,8 @@ function clearForm() {
         document.querySelectorAll('input, textarea').forEach(field => {
             field.value = '';
         });
+
+        profilePhotoDataUrl = '';
         
         // Clear dynamic sections
         document.getElementById('experienceContainer').innerHTML = '';
