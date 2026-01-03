@@ -1,6 +1,7 @@
 // Global counters for dynamic elements
 let experienceCount = 0;
 let educationCount = 0;
+let courseCount = 0;
 let languageCount = 0;
 let currentStyle = 'style1'; // Default style
 let profilePhotoDataUrl = '';
@@ -94,6 +95,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     initializeStyleGrid();
     addExperience();
     addEducation();
+    addCourse();
     addLanguage();
     setupProfilePhotoUpload();
     setupSkillsChips();
@@ -303,6 +305,45 @@ function addEducation() {
         <div class="form-group">
             <label>Description (Optional)</label>
             <textarea class="edu-description" rows="2" placeholder="GPA, honors, relevant coursework..."></textarea>
+        </div>
+    `;
+    container.appendChild(item);
+}
+
+// Add Course / Certification
+function addCourse() {
+    courseCount++;
+    const container = document.getElementById('courseContainer');
+    if (!container) return;
+
+    const item = document.createElement('div');
+    item.className = 'course-item';
+    item.id = `course-${courseCount}`;
+    item.innerHTML = `
+        <button type="button" class="remove-btn" onclick="removeItem('course-${courseCount}')">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="form-group">
+            <label>Course / Certification</label>
+            <input type="text" class="course-title" placeholder="e.g., Web Development Bootcamp">
+        </div>
+        <div class="form-group">
+            <label>Institute / Platform</label>
+            <input type="text" class="course-org" placeholder="e.g., Coursera / Udemy / University">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Start</label>
+                <input type="text" class="course-start" placeholder="e.g., Jan 2024">
+            </div>
+            <div class="form-group">
+                <label>End</label>
+                <input type="text" class="course-end" placeholder="e.g., Mar 2024">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Description (Optional)</label>
+            <textarea class="course-description" rows="2" placeholder="What you learned, key projects, grade... (optional)"></textarea>
         </div>
     `;
     container.appendChild(item);
@@ -660,6 +701,46 @@ function generateCV() {
         }
     }
 
+    // Courses / Certifications
+    const courses = document.querySelectorAll('.course-item');
+    if (courses.length > 0) {
+        let hasCourse = false;
+        let courseHTML = '';
+
+        courses.forEach(course => {
+            const title = course.querySelector('.course-title')?.value || '';
+            const org = course.querySelector('.course-org')?.value || '';
+            const start = course.querySelector('.course-start')?.value || '';
+            const end = course.querySelector('.course-end')?.value || '';
+            const description = course.querySelector('.course-description')?.value || '';
+
+            if (title || org) {
+                hasCourse = true;
+                courseHTML += `
+                    <div class="cv-education-item">
+                        <div class="cv-item-header">
+                            <div>
+                                <div class="cv-item-title">${title}</div>
+                                <div class="cv-item-school">${org}</div>
+                            </div>
+                            <div class="cv-item-date">${start}${(start && end) ? ' - ' : ''}${end}</div>
+                        </div>
+                        ${description ? `<p class="cv-item-description">${description}</p>` : ''}
+                    </div>
+                `;
+            }
+        });
+
+        if (hasCourse) {
+            cvHTML += `
+                <div class="cv-section">
+                    <h2 class="cv-section-title"><i class="fas fa-certificate"></i> Courses & Certifications</h2>
+                    ${courseHTML}
+                </div>
+            `;
+        }
+    }
+
     // Skills
     {
         const skillsArray = (skillsList && skillsList.length > 0)
@@ -758,16 +839,20 @@ function clearForm() {
         // Clear dynamic sections
         document.getElementById('experienceContainer').innerHTML = '';
         document.getElementById('educationContainer').innerHTML = '';
+        const courseContainer = document.getElementById('courseContainer');
+        if (courseContainer) courseContainer.innerHTML = '';
         document.getElementById('languageContainer').innerHTML = '';
         
         // Reset counters
         experienceCount = 0;
         educationCount = 0;
+        courseCount = 0;
         languageCount = 0;
         
         // Add one of each back
         addExperience();
         addEducation();
+        addCourse();
         addLanguage();
         
         // Clear preview

@@ -282,7 +282,7 @@ input:hover, textarea:hover, select:hover {
     border-color: var(--accent-color);
 }
 
-.experience-item, .education-item, .language-item {
+.experience-item, .education-item, .course-item, .language-item {
     background: var(--bg-light);
     border-left: 4px solid var(--primary-color);
     padding: 15px;
@@ -293,7 +293,7 @@ input:hover, textarea:hover, select:hover {
     transition: all 0.3s ease;
 }
 
-.experience-item:hover, .education-item:hover, .language-item:hover {
+.experience-item:hover, .education-item:hover, .course-item:hover, .language-item:hover {
     background: linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(59, 130, 246, 0.05));
     transform: translateX(5px);
     box-shadow: var(--shadow-md);
