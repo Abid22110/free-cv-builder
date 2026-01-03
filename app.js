@@ -21,6 +21,18 @@ function openExternalLink(event, url) {
     }
 }
 
+function getTemplateDisplayName(template) {
+    const raw = String(template?.name || '').trim();
+    // If name starts with an emoji/icon, strip it so browsers don't show "?".
+    return raw.replace(/^\S+\s+/, '').trim() || raw;
+}
+
+function getTemplateNumber(template) {
+    const id = String(template?.id || '');
+    const match = id.match(/(\d+)/);
+    return match ? Number(match[1]) : 0;
+}
+
 function getCurrentTemplateMeta() {
     const template = cvTemplates.find(t => t.id === currentStyle);
     if (!template) {
@@ -449,8 +461,8 @@ function initializeStyleGrid() {
     grid.innerHTML = cvTemplates.map(template => `
         <div class="style-card" onclick="selectStyle('${template.id}')" title="${template.category}">
             <div class="style-card-inner">
-                <div class="style-preview-icon">${template.name.charAt(0)}</div>
-                <div class="style-card-name">${template.name.substring(2)}</div>
+                <div class="style-preview-icon">${getTemplateNumber(template) || ''}</div>
+                <div class="style-card-name">${getTemplateDisplayName(template)}</div>
             </div>
         </div>
     `).join('');

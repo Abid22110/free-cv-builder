@@ -219,7 +219,7 @@ input, textarea, select {
 }
 
 .skills-add-btn {
-    width: 44px;
+    min-width: 74px;
     height: 44px;
     border-radius: 10px;
     border: 2px solid var(--border-color);
@@ -230,6 +230,7 @@ input, textarea, select {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 8px;
     flex: none;
 }
 
@@ -947,14 +948,30 @@ footer i.fa-heart {
         background: white;
         padding: 0;
     }
+
+    /* Print ONLY the CV preview */
+    body * {
+        visibility: hidden !important;
+    }
+
+    #cvPreview, #cvPreview * {
+        visibility: visible !important;
+    }
+
+    #cvPreview {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
     
     .container {
         box-shadow: none;
         border-radius: 0;
     }
     
-    .form-section, .preview-header, header, footer, .style-grid-container {
-        display: none;
+    .form-section, .preview-header, header, footer, .style-grid-container, .stats-section, .reviews-section {
+        display: none !important;
     }
     
     .main-content {
@@ -968,6 +985,11 @@ footer i.fa-heart {
         padding: 12px;
         min-height: auto;
         background-image: none;
+    }
+
+    .cv-preview {
+        font-size: 12px;
+        line-height: 1.35;
     }
 
     .cv-name { font-size: 2rem; }
