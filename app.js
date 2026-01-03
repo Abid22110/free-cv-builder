@@ -7,6 +7,20 @@ let currentStyle = 'style1'; // Default style
 let profilePhotoDataUrl = '';
 let skillsList = [];
 
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function escapeHtmlMultiline(value) {
+    const escaped = escapeHtml(value);
+    return escaped.replace(/\r\n|\r|\n/g, '<br>');
+}
+
 function openExternalLink(event, url) {
     if (event && typeof event.preventDefault === 'function') {
         event.preventDefault();
@@ -105,7 +119,6 @@ function updateCvThemeBadge() {
     badgeIcon.className = `fas ${meta.iconClass} cv-theme-icon`;
 }
 
-// Check authentication on page load
 window.addEventListener('DOMContentLoaded', async () => {
     initializeStyleGrid();
     addExperience();
@@ -190,14 +203,27 @@ function renderSkillsChips() {
     const container = document.getElementById('skillsChips');
     if (!container) return;
 
-    container.innerHTML = skillsList.map(skill => `
-        <span class="skill-chip">
-            ${skill}
-            <button type="button" aria-label="Remove ${skill}" onclick="removeSkill('${skill.replace(/'/g, "\\'")}')">
-                <i class="fas fa-times"></i>
-            </button>
-        </span>
-    `).join('');
+    container.innerHTML = '';
+    for (const skill of skillsList) {
+        const chip = document.createElement('span');
+        chip.className = 'skill-chip';
+
+        const text = document.createElement('span');
+        text.textContent = skill;
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.setAttribute('aria-label', `Remove ${skill}`);
+        btn.addEventListener('click', () => removeSkill(skill));
+
+        const icon = document.createElement('i');
+        icon.className = 'fas fa-times';
+        btn.appendChild(icon);
+
+        chip.appendChild(text);
+        chip.appendChild(btn);
+        container.appendChild(chip);
+    }
 }
 
 function setupProfilePhotoUpload() {
@@ -710,6 +736,13 @@ function generateCV() {
         return;
     }
 
+    const safeFullName = escapeHtml(fullName);
+    const safeJobTitle = escapeHtml(jobTitle);
+    const safeEmail = escapeHtml(email);
+    const safePhone = escapeHtml(phone);
+    const safeLocation = escapeHtml(location);
+    const safeWebsite = escapeHtml(website);
+
     const photoHTML = profilePhotoDataUrl
         ? `<img class="cv-photo" src="${profilePhotoDataUrl}" alt="Profile photo">`
         : '';
@@ -727,16 +760,16 @@ function generateCV() {
             <div class="cv-header-top">
                 ${photoHTML}
                 <div class="cv-header-text">
-                    <h1 class="cv-name">${fullName}</h1>
-                    <p class="cv-job-title">${jobTitle}</p>
+                    <h1 class="cv-name">${safeFullName}</h1>
+                    <p class="cv-job-title">${safeJobTitle}</p>
                     ${badgeHTML}
                 </div>
             </div>
             <div class="cv-contact">
-                ${email ? `<div class="cv-contact-item"><i class="fas fa-envelope"></i> ${email}</div>` : ''}
-                ${phone ? `<div class="cv-contact-item"><i class="fas fa-phone"></i> ${phone}</div>` : ''}
-                ${location ? `<div class="cv-contact-item"><i class="fas fa-map-marker-alt"></i> ${location}</div>` : ''}
-                ${website ? `<div class="cv-contact-item"><i class="fas fa-globe"></i> ${website}</div>` : ''}
+                ${email ? `<div class="cv-contact-item"><i class="fas fa-envelope"></i> ${safeEmail}</div>` : ''}
+                ${phone ? `<div class="cv-contact-item"><i class="fas fa-phone"></i> ${safePhone}</div>` : ''}
+                ${location ? `<div class="cv-contact-item"><i class="fas fa-map-marker-alt"></i> ${safeLocation}</div>` : ''}
+                ${website ? `<div class="cv-contact-item"><i class="fas fa-globe"></i> ${safeWebsite}</div>` : ''}
             </div>
         </div>
     `;
@@ -746,7 +779,7 @@ function generateCV() {
         cvHTML += `
             <div class="cv-section">
                 <h2 class="cv-section-title"><i class="fas fa-user"></i> Professional Summary</h2>
-                <p class="cv-summary">${summary}</p>
+                <p class="cv-summary">${escapeHtmlMultiline(summary)}</p>
             </div>
         `;
     }
@@ -766,16 +799,21 @@ function generateCV() {
 
             if (title || company) {
                 hasExperience = true;
+                const safeTitle = escapeHtml(title);
+                const safeCompany = escapeHtml(company);
+                const safeStart = escapeHtml(start);
+                const safeEnd = escapeHtml(end);
+                const safeDescription = escapeHtmlMultiline(description);
                 experienceHTML += `
                     <div class="cv-experience-item">
                         <div class="cv-item-header">
                             <div>
-                                <div class="cv-item-title">${title}</div>
-                                <div class="cv-item-company">${company}</div>
+                                <div class="cv-item-title">${safeTitle}</div>
+                                <div class="cv-item-company">${safeCompany}</div>
                             </div>
-                            <div class="cv-item-date">${start} - ${end}</div>
+                            <div class="cv-item-date">${safeStart}${(safeStart && safeEnd) ? ' - ' : ''}${safeEnd}</div>
                         </div>
-                        ${description ? `<p class="cv-item-description">${description}</p>` : ''}
+                        ${description ? `<p class="cv-item-description">${safeDescription}</p>` : ''}
                     </div>
                 `;
             }
@@ -806,16 +844,21 @@ function generateCV() {
 
             if (degree || school) {
                 hasEducation = true;
+                const safeDegree = escapeHtml(degree);
+                const safeSchool = escapeHtml(school);
+                const safeStart = escapeHtml(start);
+                const safeEnd = escapeHtml(end);
+                const safeDescription = escapeHtmlMultiline(description);
                 educationHTML += `
                     <div class="cv-education-item">
                         <div class="cv-item-header">
                             <div>
-                                <div class="cv-item-title">${degree}</div>
-                                <div class="cv-item-school">${school}</div>
+                                <div class="cv-item-title">${safeDegree}</div>
+                                <div class="cv-item-school">${safeSchool}</div>
                             </div>
-                            <div class="cv-item-date">${start} - ${end}</div>
+                            <div class="cv-item-date">${safeStart}${(safeStart && safeEnd) ? ' - ' : ''}${safeEnd}</div>
                         </div>
-                        ${description ? `<p class="cv-item-description">${description}</p>` : ''}
+                        ${description ? `<p class="cv-item-description">${safeDescription}</p>` : ''}
                     </div>
                 `;
             }
@@ -846,16 +889,21 @@ function generateCV() {
 
             if (title || org) {
                 hasCourse = true;
+                const safeTitle = escapeHtml(title);
+                const safeOrg = escapeHtml(org);
+                const safeStart = escapeHtml(start);
+                const safeEnd = escapeHtml(end);
+                const safeDescription = escapeHtmlMultiline(description);
                 courseHTML += `
                     <div class="cv-education-item">
                         <div class="cv-item-header">
                             <div>
-                                <div class="cv-item-title">${title}</div>
-                                <div class="cv-item-school">${org}</div>
+                                <div class="cv-item-title">${safeTitle}</div>
+                                <div class="cv-item-school">${safeOrg}</div>
                             </div>
-                            <div class="cv-item-date">${start}${(start && end) ? ' - ' : ''}${end}</div>
+                            <div class="cv-item-date">${safeStart}${(safeStart && safeEnd) ? ' - ' : ''}${safeEnd}</div>
                         </div>
-                        ${description ? `<p class="cv-item-description">${description}</p>` : ''}
+                        ${description ? `<p class="cv-item-description">${safeDescription}</p>` : ''}
                     </div>
                 `;
             }
@@ -881,7 +929,7 @@ function generateCV() {
                 <div class="cv-section">
                     <h2 class="cv-section-title"><i class="fas fa-cogs"></i> Skills</h2>
                     <div class="cv-skills">
-                        ${skillsArray.map(skill => `<span class="cv-skill-tag">${skill}</span>`).join('')}
+                        ${skillsArray.map(skill => `<span class="cv-skill-tag">${escapeHtml(skill)}</span>`).join('')}
                     </div>
                 </div>
             `;
@@ -900,10 +948,12 @@ function generateCV() {
 
             if (name) {
                 hasLanguage = true;
+                const safeName = escapeHtml(name);
+                const safeLevel = escapeHtml(level);
                 languageHTML += `
                     <div class="cv-language-item">
-                        <span>${name}</span>
-                        <span>${level}</span>
+                        <span>${safeName}</span>
+                        <span>${safeLevel}</span>
                     </div>
                 `;
             }
@@ -932,7 +982,7 @@ function generateCV() {
     preview.classList.add('is-animating');
 
     if (signatureName && String(signatureName).trim()) {
-        preview.insertAdjacentHTML('beforeend', `<div class="cv-signature">${String(signatureName).trim()}</div>`);
+        preview.insertAdjacentHTML('beforeend', `<div class="cv-signature">${escapeHtml(String(signatureName).trim())}</div>`);
     }
 }
 
