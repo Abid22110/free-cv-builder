@@ -185,8 +185,9 @@ app.get('/signup.html', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-    console.log(`🚀 CV Builder is running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 CV Builder is running on port ${PORT}`);
     console.log(`📝 Login to start creating your CV!`);
     console.log(`🔐 Authentication system enabled`);
+    console.log(`✅ Server ready to accept connections`);
 });
