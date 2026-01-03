@@ -1147,6 +1147,8 @@ footer i.fa-heart {
     #cvPreview {
         position: static !important;
         width: 100% !important;
+        max-width: 190mm;
+        margin: 0 auto;
     }
     
     .container {
@@ -1168,20 +1170,36 @@ footer i.fa-heart {
         background: white !important;
     }
 
-    /* Ensure text is visible even if browser doesn't print backgrounds */
+    /* Keep a clean, readable PDF while preserving theme accents */
     #cvPreview {
         --cv-text: #111827 !important;
     }
-    .cv-preview,
-    .cv-preview * {
+
+    .cv-preview {
         color: var(--cv-text, #111827) !important;
         text-shadow: none !important;
     }
-    .cv-section-title {
-        color: var(--cv-primary, #111827) !important;
+
+    .cv-name { color: var(--cv-primary, #111827) !important; }
+    .cv-job-title { color: var(--cv-secondary, #111827) !important; }
+    .cv-contact { color: var(--cv-text, #111827) !important; }
+    .cv-contact i { color: var(--cv-primary, #111827) !important; }
+
+    .cv-section-title { color: var(--cv-primary, #111827) !important; }
+    .cv-item-company, .cv-item-school { color: var(--cv-primary, #111827) !important; }
+    .cv-item-date { color: var(--cv-secondary, #111827) !important; }
+
+    /* If the browser doesn't print backgrounds, chips should still look good */
+    .cv-skill-tag {
+        background: transparent !important;
+        color: var(--cv-text, #111827) !important;
+        border: 1px solid var(--cv-secondary, #111827) !important;
     }
-    .cv-item-company, .cv-item-school {
-        color: var(--cv-primary, #111827) !important;
+
+    .cv-language-item {
+        background: transparent !important;
+        border: 1px solid rgba(15, 23, 42, 0.15) !important;
+        border-left: 3px solid var(--cv-primary, #111827) !important;
     }
 
     /* Layout-10 sets white text for on-screen gradient; override for print */
@@ -1202,9 +1220,25 @@ footer i.fa-heart {
         color: var(--cv-primary, #111827) !important;
     }
 
+    /* Avoid ugly page splits */
+    .cv-section,
+    .cv-experience-item,
+    .cv-education-item,
+    .cv-language-item,
+    .cv-item-header {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    /* Slightly tighter but clean typography for PDF */
     .cv-preview {
-        font-size: 12px;
+        font-size: 11.5px;
         line-height: 1.35;
+    }
+
+    .cv-photo {
+        width: 92px;
+        height: 92px;
     }
 
     .cv-name { font-size: 2rem; }
