@@ -622,10 +622,12 @@ function setupAiAssistant() {
     const btnRun = document.getElementById('aiRunCustomBtn');
     const btnCopy = document.getElementById('aiCopyBtn');
     const btnClear = document.getElementById('aiClearChatBtn');
+    const hintEl = document.getElementById('aiHint');
     const promptEl = document.getElementById('aiPrompt');
     const messagesEl = document.getElementById('aiMessages');
 
     const messages = [];
+    let aiDisabled = false;
 
     // Expose minimal hooks so draft autosave can persist chat per-user.
     window.__freeCvAiChat = {
@@ -703,10 +705,32 @@ function setupAiAssistant() {
     const setBusy = (busy) => {
         const buttons = [btnSummary, btnSkills, btnImprove, btnRun, btnCopy, btnClear].filter(Boolean);
         for (const b of buttons) {
+            if (aiDisabled) {
+                // On static hosting, disable AI actions to avoid confusing failures.
+                const allow = b === btnClear;
+                b.disabled = !allow;
+                continue;
+            }
+
             b.disabled = !!busy || (b === btnCopy && !String(getLastAssistant() || '').trim());
         }
-        card.classList.toggle('is-busy', !!busy);
+
+        if (!aiDisabled) {
+            card.classList.toggle('is-busy', !!busy);
+        }
     };
+
+    aiDisabled = window.location.hostname.endsWith('github.io') || window.location.protocol === 'file:';
+    if (aiDisabled) {
+        if (hintEl) {
+            hintEl.textContent = 'AI needs a Node server (Render/Railway/Glitch). GitHub Pages cannot run /api/ai.';
+        }
+        if (promptEl) {
+            promptEl.disabled = true;
+            promptEl.placeholder = 'Deploy the Node server to enable AI chat…';
+        }
+        setBusy(false);
+    }
 
     const postAi = async ({ prompt, context }) => {
         const isStaticHostingDemo = () =>
