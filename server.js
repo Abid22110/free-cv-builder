@@ -7,6 +7,34 @@ const PORT = process.env.PORT || 3001;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// CORS for AI endpoint (so a static frontend like GitHub Pages can call this backend)
+// Configure allowed origins via CORS_ORIGIN (comma-separated) or '*' for any.
+app.use('/api/ai', (req, res, next) => {
+    const configured = String(process.env.CORS_ORIGIN || 'https://abid22110.github.io').trim();
+    const allowAny = configured === '*';
+    const allowList = configured
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+
+    const origin = req.headers.origin;
+    if (origin) {
+        if (allowAny) {
+            res.setHeader('Access-Control-Allow-Origin', '*');
+        } else if (allowList.includes(origin)) {
+            res.setHeader('Access-Control-Allow-Origin', origin);
+            res.setHeader('Vary', 'Origin');
+        }
+        res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    }
+
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(204);
+    }
+    next();
+});
+
 // Serve static files (CSS, JS, images)
 app.use('/style.css', express.static(path.join(__dirname, 'style.css')));
 app.use('/app.js', express.static(path.join(__dirname, 'app.js')));
@@ -39,6 +67,9 @@ app.post('/api/ai', async (req, res) => {
         const system =
             'You are an expert CV/resume writing assistant. ' +
             'Write concise, ATS-friendly content. ' +
+            'Use a clean, confident, slightly unique tone without being flashy. ' +
+            'Prefer strong action verbs and measurable impact. ' +
+            'If key info is missing, ask 1-2 short clarifying questions. ' +
             'Avoid personal data not provided. ' +
             'If asked for a summary, keep it 3-5 lines. ' +
             'If asked for skills, return a comma-separated list. ' +

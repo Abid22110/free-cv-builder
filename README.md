@@ -103,6 +103,17 @@ npm start
 
 If `OPENAI_API_KEY` is not set, the AI Assistant UI will still show, but requests will return a friendly “not configured” error.
 
+### AI on GitHub Pages (Frontend) + Render/Railway/Glitch (Backend)
+GitHub Pages is static, so it cannot run `/api/ai`. You have two options:
+
+1) Use your deployed **Node URL** as the main website (recommended)
+2) Keep GitHub Pages for UI and deploy the backend separately:
+	 - Deploy this repo to Render/Railway/Glitch
+	 - Set `OPENAI_API_KEY` on the backend host
+	 - Set `CORS_ORIGIN=https://abid22110.github.io` (or `*`) on the backend host
+	 - Edit [app-config.js](app-config.js) and set:
+		 - `AI_API_BASE_URL` to your backend URL (example: `https://your-app.onrender.com`)
+
 ### Optional Login (Firebase Auth)
 This project includes a nice login/signup UI powered by **Firebase Authentication** (Google + Email/Password).
 

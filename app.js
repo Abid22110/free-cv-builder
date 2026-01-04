@@ -629,6 +629,12 @@ function setupAiAssistant() {
     const messages = [];
     let aiDisabled = false;
 
+    const getAiEndpoint = () => {
+        const base = String(window.APP_CONFIG?.AI_API_BASE_URL || '').trim();
+        if (!base) return '/api/ai';
+        return `${base.replace(/\/+$/, '')}/api/ai`;
+    };
+
     // Expose minimal hooks so draft autosave can persist chat per-user.
     window.__freeCvAiChat = {
         getMessages: () => messages.slice(),
@@ -720,10 +726,11 @@ function setupAiAssistant() {
         }
     };
 
-    aiDisabled = window.location.hostname.endsWith('github.io') || window.location.protocol === 'file:';
+    const isStaticHost = window.location.hostname.endsWith('github.io') || window.location.protocol === 'file:';
+    aiDisabled = isStaticHost && getAiEndpoint() === '/api/ai';
     if (aiDisabled) {
         if (hintEl) {
-            hintEl.textContent = 'AI needs a Node server (Render/Railway/Glitch). GitHub Pages cannot run /api/ai.';
+            hintEl.textContent = 'AI needs a backend. Deploy server (Render/Railway/Glitch) and set AI_API_BASE_URL in app-config.js.';
         }
         if (promptEl) {
             promptEl.disabled = true;
@@ -737,7 +744,7 @@ function setupAiAssistant() {
             window.location.hostname.endsWith('github.io') || window.location.protocol === 'file:';
 
         try {
-            const response = await fetch('/api/ai', {
+            const response = await fetch(getAiEndpoint(), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt, context })
@@ -756,7 +763,7 @@ function setupAiAssistant() {
         } catch (err) {
             if (isStaticHostingDemo()) {
                 throw new Error(
-                    'AI chat will not work on GitHub Pages/file://. Use a Node host (Render/Railway/Glitch) and set OPENAI_API_KEY.'
+                    'AI is disabled on GitHub Pages unless you set AI_API_BASE_URL in app-config.js to your deployed backend.'
                 );
             }
             throw err;
