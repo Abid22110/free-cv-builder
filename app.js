@@ -459,12 +459,28 @@ function setupAuthUi() {
 
     if (!statusEl || !signInLink || !signOutBtn) return;
 
-    const config = typeof window !== 'undefined' ? window.FIREBASE_CONFIG : null;
-    const firebaseAvailable = typeof window !== 'undefined' && window.firebase && config;
+    const getFirebaseConfig = () => {
+        const fromFile = typeof window !== 'undefined' ? window.FIREBASE_CONFIG : null;
+        const isConfigured = (cfg) => !!(cfg?.apiKey && String(cfg.apiKey) !== 'REPLACE_ME');
+
+        if (isConfigured(fromFile)) return fromFile;
+
+        try {
+            const raw = localStorage.getItem('free-cv-builder:firebase-config');
+            const override = raw ? safeJsonParse(raw) : null;
+            if (isConfigured(override)) return override;
+        } catch {
+            // ignore
+        }
+        return fromFile;
+    };
+
+    const config = getFirebaseConfig();
+    const firebaseAvailable = typeof window !== 'undefined' && window.firebase;
     const configured = !!(config?.apiKey && String(config.apiKey) !== 'REPLACE_ME');
 
     if (!firebaseAvailable || !configured) {
-        statusEl.textContent = 'Free • Optional Login (configure Firebase)';
+        statusEl.textContent = 'Free • Guest mode (Login not configured)';
         signInLink.style.display = '';
         signOutBtn.style.display = 'none';
         return;

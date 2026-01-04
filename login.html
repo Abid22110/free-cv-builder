@@ -249,6 +249,51 @@
             color: #2563eb;
         }
 
+        .setup-panel {
+            margin-top: 18px;
+            padding: 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            background: #f8fafc;
+            display: none;
+        }
+
+        .setup-panel h3 {
+            font-size: 1rem;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        .setup-panel p {
+            font-size: 0.92rem;
+            color: #475569;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .setup-panel textarea {
+            width: 100%;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px;
+            min-height: 110px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 0.85rem;
+        }
+
+        .setup-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .setup-actions .btn-login {
+            width: auto;
+            padding: 12px 14px;
+            font-size: 0.95rem;
+        }
+
         @media (max-width: 480px) {
             .auth-container {
                 padding: 40px 30px;
@@ -297,6 +342,31 @@
             </button>
         </form>
 
+        <div class="setup-panel" id="firebaseSetupPanel">
+            <h3>Enable Login (1-time Setup)</h3>
+            <p>
+                Paste your Firebase <b>Web App config</b> here. It will be saved in your browser (localStorage).
+                This is safe to use on GitHub Pages.
+            </p>
+            <textarea id="firebaseConfigTextarea" placeholder='{
+  "apiKey": "...",
+  "authDomain": "...",
+  "projectId": "...",
+  "appId": "..."
+}'></textarea>
+            <div class="setup-actions">
+                <button type="button" class="btn-login" id="saveFirebaseConfigBtn">
+                    <i class="fas fa-save"></i> Save Config
+                </button>
+                <a class="btn-login" href="https://console.firebase.google.com/" target="_blank" rel="noreferrer" style="text-decoration:none;">
+                    <i class="fas fa-arrow-up-right-from-square"></i> Open Firebase Console
+                </a>
+                <a class="btn-login" href="index.html" style="text-decoration:none; background: linear-gradient(135deg, #64748b, #94a3b8);">
+                    <i class="fas fa-user"></i> Continue as Guest
+                </a>
+            </div>
+        </div>
+
         <div class="divider">
             <span>OR</span>
         </div>
@@ -320,8 +390,8 @@
     <!-- Firebase Auth (required for login) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="firebase-config.js?v=20260104-4"></script>
-    <script src="app-config.js?v=20260104-4"></script>
+    <script src="firebase-config.js?v=20260104-5"></script>
+    <script src="app-config.js?v=20260104-5"></script>
 
     <script>
         function isStaticHostingDemo() {
@@ -332,18 +402,58 @@
         }
 
         function ensureFirebaseConfigured() {
-            const cfg = window.FIREBASE_CONFIG;
-            if (!window.firebase || !cfg || !cfg.apiKey || String(cfg.apiKey) === 'REPLACE_ME') {
-                const errorMessage = document.getElementById('errorMessage');
-                errorMessage.textContent = 'Firebase login is not configured. Open firebase-config.js and paste your Firebase Web App config.';
+            const errorMessage = document.getElementById('errorMessage');
+            const setupPanel = document.getElementById('firebaseSetupPanel');
+
+            let cfg = window.FIREBASE_CONFIG;
+            const hasCfg = cfg && cfg.apiKey && String(cfg.apiKey) !== 'REPLACE_ME';
+
+            if (!hasCfg) {
+                try {
+                    const raw = localStorage.getItem('free-cv-builder:firebase-config');
+                    const override = raw ? JSON.parse(raw) : null;
+                    if (override && override.apiKey && String(override.apiKey) !== 'REPLACE_ME') {
+                        cfg = override;
+                    }
+                } catch {
+                    // ignore
+                }
+            }
+
+            const ok = window.firebase && cfg && cfg.apiKey && String(cfg.apiKey) !== 'REPLACE_ME';
+            if (!ok) {
+                if (setupPanel) setupPanel.style.display = 'block';
+                errorMessage.textContent = 'Login is not configured yet. Paste Firebase config below (1-time).';
                 errorMessage.classList.add('show');
                 return false;
             }
+
             if (!firebase.apps || !firebase.apps.length) {
                 firebase.initializeApp(cfg);
             }
             return true;
         }
+
+        document.getElementById('saveFirebaseConfigBtn')?.addEventListener('click', () => {
+            const ta = document.getElementById('firebaseConfigTextarea');
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.classList.remove('show');
+            try {
+                const parsed = JSON.parse(String(ta?.value || '').trim());
+                if (!parsed || !parsed.apiKey || !parsed.authDomain) {
+                    throw new Error('Config must include apiKey and authDomain');
+                }
+                localStorage.setItem('free-cv-builder:firebase-config', JSON.stringify(parsed));
+                errorMessage.textContent = 'Saved! Reloading…';
+                errorMessage.style.color = '#10b981';
+                errorMessage.classList.add('show');
+                setTimeout(() => window.location.reload(), 350);
+            } catch (e) {
+                errorMessage.style.color = '#ef4444';
+                errorMessage.textContent = `Invalid JSON: ${String(e?.message || e)}`;
+                errorMessage.classList.add('show');
+            }
+        });
 
         async function signInWithGoogle() {
             const errorMessage = document.getElementById('errorMessage');
