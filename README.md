@@ -117,6 +117,10 @@ GitHub Pages is static, so it cannot run `/api/ai`. You have two options:
 ### Optional Login (Firebase Auth)
 This project includes a nice login/signup UI powered by **Firebase Authentication** (Google + Email/Password).
 
+For the simplest setup, follow: [FIREBASE_SETUP.md](FIREBASE_SETUP.md)
+
+Note: To make login actually useful across devices, the app can also sync drafts using **Firestore** (optional but recommended).
+
 1) Create a Firebase project: https://console.firebase.google.com/
 2) Add a **Web App** and copy the config values
 3) Firebase Console → Authentication → Sign-in method:
