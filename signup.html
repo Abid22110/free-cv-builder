@@ -289,10 +289,6 @@
     </style>
 </head>
 <body>
-    <script>
-        // Signup/Login has been removed. Redirect to the main app.
-        window.location.replace('index.html');
-    </script>
     <div class="auth-container">
         <div class="auth-header">
             <i class="fas fa-user-plus"></i>
@@ -349,6 +345,11 @@
             <span>OR</span>
         </div>
 
+        <button type="button" class="btn-signup" id="googleSignupBtn" style="background: #111827;">
+            <i class="fab fa-google"></i>
+            Continue with Google
+        </button>
+
         <div class="login-link">
             Already have an account? <a href="login.html">Login</a>
         </div>
@@ -360,6 +361,11 @@
         </div>
     </div>
 
+    <!-- Firebase Auth (required for signup) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
     <script>
         function isStaticHostingDemo() {
             return (
@@ -367,6 +373,52 @@
                 window.location.protocol === 'file:'
             );
         }
+
+        function ensureFirebaseConfigured() {
+            const cfg = window.FIREBASE_CONFIG;
+            if (!window.firebase || !cfg || !cfg.apiKey || String(cfg.apiKey) === 'REPLACE_ME') {
+                const errorMessage = document.getElementById('errorMessage');
+                errorMessage.textContent = 'Firebase signup is not configured. Open firebase-config.js and paste your Firebase Web App config.';
+                errorMessage.classList.add('show');
+                return false;
+            }
+            if (!firebase.apps || !firebase.apps.length) {
+                firebase.initializeApp(cfg);
+            }
+            return true;
+        }
+
+        async function signUpWithGoogle() {
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            errorMessage.classList.remove('show');
+            successMessage.classList.remove('show');
+
+            if (!ensureFirebaseConfigured()) return;
+
+            const auth = firebase.auth();
+            const provider = new firebase.auth.GoogleAuthProvider();
+
+            try {
+                await auth.signInWithPopup(provider);
+                window.location.href = '/';
+            } catch (err) {
+                try {
+                    await auth.signInWithRedirect(provider);
+                } catch (err2) {
+                    if (isStaticHostingDemo()) {
+                        errorMessage.textContent = 'Google signup needs a proper domain (localhost or deployed). Avoid opening via file:// and ensure Authorized domains is set in Firebase.';
+                    } else {
+                        errorMessage.textContent = String(err2?.message || err?.message || 'Google signup failed');
+                    }
+                    errorMessage.classList.add('show');
+                }
+            }
+        }
+
+        document.getElementById('googleSignupBtn')?.addEventListener('click', () => {
+            signUpWithGoogle();
+        });
 
         const passwordInput = document.getElementById('password');
         const strengthBar = document.getElementById('strengthBar');
@@ -421,33 +473,31 @@
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
 
             try {
-                const response = await fetch('api/signup', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ name, email, password })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    successMessage.textContent = 'Account created successfully! Redirecting to login...';
-                    successMessage.classList.add('show');
-                    setTimeout(() => {
-                        window.location.href = 'login.html';
-                    }, 2000);
-                } else {
-                    errorMessage.textContent = data.message || 'Signup failed. Please try again.';
-                    errorMessage.classList.add('show');
+                if (!ensureFirebaseConfigured()) {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+                    return;
                 }
+
+                const cred = await firebase.auth().createUserWithEmailAndPassword(email, password);
+                if (cred?.user && name) {
+                    try {
+                        await cred.user.updateProfile({ displayName: name });
+                    } catch {
+                        // ignore
+                    }
+                }
+
+                successMessage.textContent = 'Account created! Redirecting...';
+                successMessage.classList.add('show');
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 500);
             } catch (error) {
                 if (isStaticHostingDemo()) {
-                    errorMessage.textContent = 'You are on GitHub Pages (static). Signup works only on your server host URL (Glitch/Render). Open the deployed server URL and try again.';
+                    errorMessage.textContent = 'Signup needs a proper domain (localhost or deployed). Avoid opening via file:// and ensure Authorized domains is set in Firebase.';
                 } else {
-                    errorMessage.textContent = 'Network error. Please try again.';
+                    errorMessage.textContent = String(error?.message || 'Signup failed. Please try again.');
                 }
                 errorMessage.classList.add('show');
                 submitBtn.disabled = false;

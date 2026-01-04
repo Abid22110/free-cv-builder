@@ -7,6 +7,310 @@ let currentStyle = 'style1'; // Default style
 let profilePhotoDataUrl = '';
 let skillsList = [];
 
+const CV_DRAFT_STORAGE_PREFIX = 'free-cv-builder:draft:v2.1';
+let currentAuthUid = null;
+let draftSaveTimer = null;
+
+function getDraftStorageKey(uid = currentAuthUid) {
+    const owner = uid ? String(uid) : 'guest';
+    return `${CV_DRAFT_STORAGE_PREFIX}:${owner}`;
+}
+
+function switchDraftOwner(uid) {
+    const nextUid = uid ? String(uid) : null;
+    if (nextUid === currentAuthUid) return;
+
+    // Save current draft before switching keys.
+    saveCvDraft();
+
+    const prevKey = getDraftStorageKey(currentAuthUid);
+    const nextKey = getDraftStorageKey(nextUid);
+
+    // If user signs in and has no draft yet, migrate the guest draft.
+    try {
+        const prevRaw = localStorage.getItem(prevKey);
+        const nextRaw = localStorage.getItem(nextKey);
+        if (nextUid && !nextRaw && prevRaw) {
+            localStorage.setItem(nextKey, prevRaw);
+        }
+    } catch {
+        // ignore
+    }
+
+    currentAuthUid = nextUid;
+    loadCvDraft({ storageKey: nextKey });
+}
+
+function safeJsonParse(value) {
+    try {
+        return JSON.parse(value);
+    } catch {
+        return null;
+    }
+}
+
+function scheduleSaveDraft(delayMs = 450) {
+    if (draftSaveTimer) {
+        clearTimeout(draftSaveTimer);
+    }
+    draftSaveTimer = setTimeout(() => {
+        draftSaveTimer = null;
+        saveCvDraft();
+    }, delayMs);
+}
+
+function collectCvDraft() {
+    const getVal = (id) => String(document.getElementById(id)?.value || '').trim();
+
+    const experiences = Array.from(document.querySelectorAll('.experience-item')).map((exp) => ({
+        title: String(exp.querySelector('.exp-title')?.value || '').trim(),
+        company: String(exp.querySelector('.exp-company')?.value || '').trim(),
+        start: String(exp.querySelector('.exp-start')?.value || '').trim(),
+        end: String(exp.querySelector('.exp-end')?.value || '').trim(),
+        description: String(exp.querySelector('.exp-description')?.value || '').trim()
+    })).filter(e => e.title || e.company || e.description);
+
+    const education = Array.from(document.querySelectorAll('.education-item')).map((edu) => ({
+        degree: String(edu.querySelector('.edu-degree')?.value || '').trim(),
+        school: String(edu.querySelector('.edu-school')?.value || '').trim(),
+        start: String(edu.querySelector('.edu-start')?.value || '').trim(),
+        end: String(edu.querySelector('.edu-end')?.value || '').trim(),
+        description: String(edu.querySelector('.edu-description')?.value || '').trim()
+    })).filter(e => e.degree || e.school || e.description);
+
+    const courses = Array.from(document.querySelectorAll('.course-item')).map((course) => ({
+        title: String(course.querySelector('.course-title')?.value || '').trim(),
+        org: String(course.querySelector('.course-org')?.value || '').trim(),
+        start: String(course.querySelector('.course-start')?.value || '').trim(),
+        end: String(course.querySelector('.course-end')?.value || '').trim(),
+        description: String(course.querySelector('.course-description')?.value || '').trim()
+    })).filter(c => c.title || c.org || c.description);
+
+    const languages = Array.from(document.querySelectorAll('.language-item')).map((lang) => ({
+        name: String(lang.querySelector('.lang-name')?.value || '').trim(),
+        level: String(lang.querySelector('.lang-level')?.value || '').trim()
+    })).filter(l => l.name);
+
+    // Photo can be large; store only if reasonably sized.
+    const photo = String(profilePhotoDataUrl || '');
+    const photoSafe = photo && photo.length <= 220000 ? photo : '';
+
+    let aiChatMessages = [];
+    try {
+        const chat = window.__freeCvAiChat;
+        if (chat && typeof chat.getMessages === 'function') {
+            aiChatMessages = chat
+                .getMessages()
+                .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && !m.pending)
+                .map((m) => ({ role: m.role, content: String(m.content || '').trim() }))
+                .filter((m) => m.content)
+                .slice(-20);
+        }
+    } catch {
+        // ignore
+    }
+
+    return {
+        version: '2.1',
+        savedAt: Date.now(),
+        currentStyle: String(currentStyle || 'style1'),
+        profilePhotoDataUrl: photoSafe,
+        skillsList: Array.isArray(skillsList) ? skillsList.slice(0, 60) : [],
+        aiChatMessages,
+        fields: {
+            fullName: getVal('fullName'),
+            jobTitle: getVal('jobTitle'),
+            email: getVal('email'),
+            phone: getVal('phone'),
+            location: getVal('location'),
+            website: getVal('website'),
+            summary: String(document.getElementById('summary')?.value || ''),
+            signatureName: getVal('signatureName')
+        },
+        experiences,
+        education,
+        courses,
+        languages
+    };
+}
+
+function saveCvDraft() {
+    try {
+        const draft = collectCvDraft();
+        localStorage.setItem(getDraftStorageKey(), JSON.stringify(draft));
+    } catch {
+        // Ignore storage failures (quota/private mode).
+    }
+}
+
+function clearCvDraft() {
+    try {
+        localStorage.removeItem(getDraftStorageKey());
+    } catch {
+        // ignore
+    }
+}
+
+function loadCvDraft({ storageKey } = {}) {
+    const key = storageKey ? String(storageKey) : getDraftStorageKey();
+    const raw = (() => {
+        try {
+            return localStorage.getItem(key);
+        } catch {
+            return null;
+        }
+    })();
+
+    const draft = safeJsonParse(raw);
+    if (!draft || typeof draft !== 'object') return;
+
+    const setVal = (id, value) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.value = value ?? '';
+    };
+
+    const fields = draft.fields || {};
+    setVal('fullName', fields.fullName);
+    setVal('jobTitle', fields.jobTitle);
+    setVal('email', fields.email);
+    setVal('phone', fields.phone);
+    setVal('location', fields.location);
+    setVal('website', fields.website);
+    if (document.getElementById('summary')) {
+        document.getElementById('summary').value = String(fields.summary || '');
+    }
+    setVal('signatureName', fields.signatureName);
+
+    currentStyle = String(draft.currentStyle || currentStyle || 'style1');
+    profilePhotoDataUrl = String(draft.profilePhotoDataUrl || '');
+
+    skillsList = Array.isArray(draft.skillsList) ? draft.skillsList.slice(0, 60) : [];
+    renderSkillsChips();
+    syncSkillsHiddenValue();
+
+    const expContainer = document.getElementById('experienceContainer');
+    const eduContainer = document.getElementById('educationContainer');
+    const courseContainer = document.getElementById('courseContainer');
+    const langContainer = document.getElementById('languageContainer');
+    if (expContainer) expContainer.innerHTML = '';
+    if (eduContainer) eduContainer.innerHTML = '';
+    if (courseContainer) courseContainer.innerHTML = '';
+    if (langContainer) langContainer.innerHTML = '';
+
+    experienceCount = 0;
+    educationCount = 0;
+    courseCount = 0;
+    languageCount = 0;
+
+    const experiences = Array.isArray(draft.experiences) ? draft.experiences : [];
+    const education = Array.isArray(draft.education) ? draft.education : [];
+    const courses = Array.isArray(draft.courses) ? draft.courses : [];
+    const languages = Array.isArray(draft.languages) ? draft.languages : [];
+
+    if (experiences.length === 0) {
+        addExperience();
+    } else {
+        for (const e of experiences) {
+            addExperience();
+            const last = expContainer?.lastElementChild;
+            if (!last) continue;
+            const t = last.querySelector('.exp-title');
+            const c = last.querySelector('.exp-company');
+            const s = last.querySelector('.exp-start');
+            const en = last.querySelector('.exp-end');
+            const d = last.querySelector('.exp-description');
+            if (t) t.value = e.title || '';
+            if (c) c.value = e.company || '';
+            if (s) s.value = e.start || '';
+            if (en) en.value = e.end || '';
+            if (d) d.value = e.description || '';
+        }
+    }
+
+    if (education.length === 0) {
+        addEducation();
+    } else {
+        for (const e of education) {
+            addEducation();
+            const last = eduContainer?.lastElementChild;
+            if (!last) continue;
+            const deg = last.querySelector('.edu-degree');
+            const sch = last.querySelector('.edu-school');
+            const s = last.querySelector('.edu-start');
+            const en = last.querySelector('.edu-end');
+            const d = last.querySelector('.edu-description');
+            if (deg) deg.value = e.degree || '';
+            if (sch) sch.value = e.school || '';
+            if (s) s.value = e.start || '';
+            if (en) en.value = e.end || '';
+            if (d) d.value = e.description || '';
+        }
+    }
+
+    if (courses.length === 0) {
+        addCourse();
+    } else {
+        for (const c of courses) {
+            addCourse();
+            const last = courseContainer?.lastElementChild;
+            if (!last) continue;
+            const title = last.querySelector('.course-title');
+            const org = last.querySelector('.course-org');
+            const s = last.querySelector('.course-start');
+            const en = last.querySelector('.course-end');
+            const d = last.querySelector('.course-description');
+            if (title) title.value = c.title || '';
+            if (org) org.value = c.org || '';
+            if (s) s.value = c.start || '';
+            if (en) en.value = c.end || '';
+            if (d) d.value = c.description || '';
+        }
+    }
+
+    if (languages.length === 0) {
+        addLanguage();
+    } else {
+        for (const l of languages) {
+            addLanguage();
+            const last = langContainer?.lastElementChild;
+            if (!last) continue;
+            const name = last.querySelector('.lang-name');
+            const level = last.querySelector('.lang-level');
+            if (name) name.value = l.name || '';
+            if (level) level.value = l.level || 'Native';
+        }
+    }
+
+    // Apply selected style to preview container even before generating.
+    const preview = document.getElementById('cvPreview');
+    if (preview) {
+        preview.className = `cv-preview ${currentStyle} ${getLayoutClassForStyle(currentStyle)}`;
+    }
+
+    // Restore AI chat messages (if assistant is initialized).
+    try {
+        const chat = window.__freeCvAiChat;
+        if (chat && typeof chat.setMessages === 'function' && Array.isArray(draft.aiChatMessages)) {
+            chat.setMessages(draft.aiChatMessages);
+        }
+    } catch {
+        // ignore
+    }
+
+    // Auto-preview if required fields exist.
+    const fullName = String(fields.fullName || '').trim();
+    const jobTitle = String(fields.jobTitle || '').trim();
+    const email = String(fields.email || '').trim();
+    if (fullName && jobTitle && email) {
+        try {
+            generateCV();
+        } catch {
+            // ignore
+        }
+    }
+}
+
 function escapeHtml(value) {
     return String(value ?? '')
         .replace(/&/g, '&amp;')
@@ -127,7 +431,469 @@ window.addEventListener('DOMContentLoaded', async () => {
     addLanguage();
     setupProfilePhotoUpload();
     setupSkillsChips();
+    setupAiAssistant();
+    setupWizard();
+    setupAuthUi();
+
+    // Restore a saved draft if present.
+    loadCvDraft();
+
+    // Auto-save on any input changes.
+    const formSection = document.querySelector('.form-section');
+    if (formSection) {
+        formSection.addEventListener('input', () => scheduleSaveDraft());
+        formSection.addEventListener('change', () => scheduleSaveDraft());
+        formSection.addEventListener('click', (e) => {
+            const el = e.target;
+            if (el && (el.closest('.add-btn') || el.closest('.remove-btn'))) {
+                scheduleSaveDraft();
+            }
+        });
+    }
 });
+
+function setupAuthUi() {
+    const statusEl = document.getElementById('authStatusText');
+    const signInLink = document.getElementById('authSignInLink');
+    const signOutBtn = document.getElementById('authSignOutBtn');
+
+    if (!statusEl || !signInLink || !signOutBtn) return;
+
+    const config = typeof window !== 'undefined' ? window.FIREBASE_CONFIG : null;
+    const firebaseAvailable = typeof window !== 'undefined' && window.firebase && config;
+    const configured = !!(config?.apiKey && String(config.apiKey) !== 'REPLACE_ME');
+
+    if (!firebaseAvailable || !configured) {
+        statusEl.textContent = 'Free • Optional Login (configure Firebase)';
+        signInLink.style.display = '';
+        signOutBtn.style.display = 'none';
+        return;
+    }
+
+    try {
+        if (!firebase.apps || !firebase.apps.length) {
+            firebase.initializeApp(config);
+        }
+
+        const auth = firebase.auth();
+
+        const setSignedOut = () => {
+            statusEl.textContent = 'Free • Optional Login';
+            signInLink.style.display = '';
+            signOutBtn.style.display = 'none';
+        };
+
+        const setSignedIn = (user) => {
+            const label = user?.displayName || user?.email || 'Account';
+            statusEl.textContent = `Signed in: ${label}`;
+            signInLink.style.display = 'none';
+            signOutBtn.style.display = '';
+        };
+
+        signOutBtn.addEventListener('click', async () => {
+            try {
+                await auth.signOut();
+            } catch {
+                // ignore
+            }
+        });
+
+        auth.onAuthStateChanged((user) => {
+            if (user) setSignedIn(user);
+            else setSignedOut();
+            switchDraftOwner(user?.uid);
+        });
+    } catch {
+        statusEl.textContent = 'Free • Optional Login';
+        signInLink.style.display = '';
+        signOutBtn.style.display = 'none';
+    }
+}
+
+function setupWizard() {
+    const header = document.getElementById('wizardHeader');
+    if (!header) return;
+
+    const steps = Array.from(document.querySelectorAll('.wizard-step'));
+    const panels = Array.from(document.querySelectorAll('.wizard-panel'));
+    const progress = document.getElementById('wizardProgressBar');
+
+    const btnNext1 = document.getElementById('wizardNext1');
+    const btnBack2 = document.getElementById('wizardBack2');
+    const btnNext2 = document.getElementById('wizardNext2');
+    const btnBack3 = document.getElementById('wizardBack3');
+    const btnPreview = document.getElementById('wizardPreviewBtn');
+
+    let current = 1;
+
+    const setStep = (n) => {
+        current = Math.max(1, Math.min(3, Number(n) || 1));
+
+        for (const s of steps) {
+            const sn = Number(s.getAttribute('data-step'));
+            const active = sn === current;
+            s.classList.toggle('is-active', active);
+            if (active) {
+                s.setAttribute('aria-current', 'step');
+            } else {
+                s.removeAttribute('aria-current');
+            }
+        }
+
+        for (const p of panels) {
+            const pn = Number(p.getAttribute('data-step'));
+            p.style.display = pn === current ? '' : 'none';
+        }
+
+        if (progress) {
+            progress.style.width = `${(current / 3) * 100}%`;
+        }
+
+        // Keep the view near the top of the form section when changing steps.
+        header.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    const canGenerate = () => {
+        const fullName = String(document.getElementById('fullName')?.value || '').trim();
+        const jobTitle = String(document.getElementById('jobTitle')?.value || '').trim();
+        const email = String(document.getElementById('email')?.value || '').trim();
+        return !!(fullName && jobTitle && email);
+    };
+
+    const refreshPreview = () => {
+        if (!canGenerate()) {
+            alert('Please fill required fields: Full Name, Job Title, and Email');
+            return false;
+        }
+        generateCV();
+        return true;
+    };
+
+    if (btnNext1) {
+        btnNext1.addEventListener('click', () => {
+            if (!refreshPreview()) return;
+            setStep(2);
+        });
+    }
+
+    if (btnPreview) {
+        btnPreview.addEventListener('click', () => {
+            refreshPreview();
+        });
+    }
+
+    if (btnBack2) btnBack2.addEventListener('click', () => setStep(1));
+
+    if (btnNext2) {
+        btnNext2.addEventListener('click', () => {
+            // Ensure preview exists before download step.
+            if (!refreshPreview()) return;
+            setStep(3);
+        });
+    }
+
+    if (btnBack3) btnBack3.addEventListener('click', () => setStep(2));
+
+    for (const s of steps) {
+        s.addEventListener('click', () => {
+            const sn = Number(s.getAttribute('data-step'));
+            if (sn === 1) return setStep(1);
+            if (sn === 2) {
+                if (!refreshPreview()) return;
+                return setStep(2);
+            }
+            if (sn === 3) {
+                if (!refreshPreview()) return;
+                return setStep(3);
+            }
+        });
+    }
+
+    setStep(1);
+}
+
+function setupAiAssistant() {
+    const card = document.getElementById('aiAssistantCard');
+    if (!card) return;
+
+    const btnSummary = document.getElementById('aiGenerateSummaryBtn');
+    const btnSkills = document.getElementById('aiSuggestSkillsBtn');
+    const btnImprove = document.getElementById('aiImproveExperienceBtn');
+    const btnRun = document.getElementById('aiRunCustomBtn');
+    const btnCopy = document.getElementById('aiCopyBtn');
+    const btnClear = document.getElementById('aiClearChatBtn');
+    const promptEl = document.getElementById('aiPrompt');
+    const messagesEl = document.getElementById('aiMessages');
+
+    const messages = [];
+
+    // Expose minimal hooks so draft autosave can persist chat per-user.
+    window.__freeCvAiChat = {
+        getMessages: () => messages.slice(),
+        setMessages: (arr) => {
+            messages.length = 0;
+            const incoming = Array.isArray(arr) ? arr : [];
+            for (const m of incoming.slice(-20)) {
+                const role = m?.role === 'assistant' ? 'assistant' : 'user';
+                const content = String(m?.content || '').trim();
+                if (!content) continue;
+                messages.push({ role, content });
+            }
+            renderMessages();
+        }
+    };
+    const getLastAssistant = () => {
+        for (let i = messages.length - 1; i >= 0; i--) {
+            if (messages[i].role === 'assistant' && !messages[i].pending) return messages[i].content;
+        }
+        return '';
+    };
+
+    const renderMessages = () => {
+        if (!messagesEl) return;
+        messagesEl.innerHTML = '';
+
+        if (messages.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'ai-msg assistant';
+            const bubble = document.createElement('div');
+            bubble.className = 'ai-bubble';
+            bubble.textContent = 'Hi! Use the buttons above, or ask me to write a summary, improve bullets, or suggest skills.';
+            empty.appendChild(bubble);
+            messagesEl.appendChild(empty);
+        } else {
+            for (const m of messages) {
+                const row = document.createElement('div');
+                row.className = `ai-msg ${m.role}`;
+                const bubble = document.createElement('div');
+                bubble.className = `ai-bubble${m.pending ? ' is-pending' : ''}`;
+                bubble.textContent = m.content;
+                row.appendChild(bubble);
+                messagesEl.appendChild(row);
+            }
+        }
+
+        if (btnCopy) {
+            btnCopy.disabled = !String(getLastAssistant() || '').trim();
+        }
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+    };
+
+    const pushMessage = (role, content, { pending = false } = {}) => {
+        const text = String(content || '').trim();
+        if (!text) return;
+        messages.push({ role, content: text, pending: !!pending });
+        // Keep chat light
+        if (messages.length > 20) messages.splice(0, messages.length - 20);
+        renderMessages();
+    };
+
+    const replaceLastPendingAssistant = (content) => {
+        for (let i = messages.length - 1; i >= 0; i--) {
+            if (messages[i].role === 'assistant' && messages[i].pending) {
+                messages[i].content = String(content || '').trim();
+                messages[i].pending = false;
+                renderMessages();
+                return;
+            }
+        }
+        pushMessage('assistant', content);
+    };
+
+    const setBusy = (busy) => {
+        const buttons = [btnSummary, btnSkills, btnImprove, btnRun, btnCopy, btnClear].filter(Boolean);
+        for (const b of buttons) {
+            b.disabled = !!busy || (b === btnCopy && !String(getLastAssistant() || '').trim());
+        }
+        card.classList.toggle('is-busy', !!busy);
+    };
+
+    const postAi = async ({ prompt, context }) => {
+        const response = await fetch('/api/ai', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt, context })
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(data?.error || 'AI request failed');
+        }
+        return String(data?.text || '').trim();
+    };
+
+    const getAiContext = () => {
+        const fullName = String(document.getElementById('fullName')?.value || '').trim();
+        const jobTitle = String(document.getElementById('jobTitle')?.value || '').trim();
+        const summary = String(document.getElementById('summary')?.value || '').trim();
+        const skills = String(document.getElementById('skills')?.value || '').trim();
+
+        const experiences = Array.from(document.querySelectorAll('.experience-item')).map((exp) => ({
+            title: String(exp.querySelector('.exp-title')?.value || '').trim(),
+            company: String(exp.querySelector('.exp-company')?.value || '').trim(),
+            start: String(exp.querySelector('.exp-start')?.value || '').trim(),
+            end: String(exp.querySelector('.exp-end')?.value || '').trim(),
+            description: String(exp.querySelector('.exp-description')?.value || '').trim()
+        })).filter(e => e.title || e.company || e.description);
+
+        const education = Array.from(document.querySelectorAll('.education-item')).map((edu) => ({
+            degree: String(edu.querySelector('.edu-degree')?.value || '').trim(),
+            school: String(edu.querySelector('.edu-school')?.value || '').trim(),
+            start: String(edu.querySelector('.edu-start')?.value || '').trim(),
+            end: String(edu.querySelector('.edu-end')?.value || '').trim(),
+            details: String(edu.querySelector('.edu-description')?.value || '').trim()
+        })).filter(e => e.degree || e.school || e.details);
+
+        const languages = Array.from(document.querySelectorAll('.language-item')).map((lang) => ({
+            name: String(lang.querySelector('.lang-name')?.value || '').trim(),
+            level: String(lang.querySelector('.lang-level')?.value || '').trim()
+        })).filter(l => l.name);
+
+        const recentChat = messages.slice(-6).map(m => ({ role: m.role, content: m.content }));
+
+        const payload = {
+            fullName,
+            jobTitle,
+            summary,
+            skills,
+            experiences,
+            education,
+            languages,
+            recentChat
+        };
+
+        // Keep context reasonably small.
+        return JSON.stringify(payload).slice(0, 6000);
+    };
+
+    const applySummary = (text) => {
+        const el = document.getElementById('summary');
+        if (!el) return;
+        el.value = String(text || '').trim();
+    };
+
+    const applySkills = (text) => {
+        const raw = String(text || '').trim();
+        if (!raw) return;
+
+        const parts = raw
+            .split(/,|\n/)
+            .map(s => s.trim())
+            .filter(Boolean);
+
+        for (const skill of parts) {
+            const normalized = skill.replace(/^[-•\s]+/, '').replace(/\s+/g, ' ').trim();
+            if (!normalized) continue;
+            if (!skillsList.some(s => s.toLowerCase() === normalized.toLowerCase())) {
+                skillsList.push(normalized);
+            }
+        }
+        renderSkillsChips();
+        syncSkillsHiddenValue();
+    };
+
+    const applyImprovedExperience = (text) => {
+        const cleaned = String(text || '').trim();
+        if (!cleaned) return;
+
+        const exp = document.querySelector('.experience-item');
+        const target = exp?.querySelector('.exp-description');
+        if (!target) return;
+
+        // Convert hyphen bullets to plain newlines (keeps it editable)
+        const lines = cleaned
+            .split(/\r\n|\r|\n/)
+            .map(l => l.replace(/^\s*[-•]\s*/, '').trim())
+            .filter(Boolean);
+
+        target.value = lines.map(l => `- ${l}`).join('\n');
+    };
+
+    const sendMessage = async ({ kind, prompt }) => {
+        setBusy(true);
+        try {
+            const context = getAiContext();
+            pushMessage('user', prompt);
+            pushMessage('assistant', 'Typing…', { pending: true });
+            const text = await postAi({ prompt, context });
+            replaceLastPendingAssistant(text);
+
+            if (kind === 'summary') applySummary(text);
+            if (kind === 'skills') applySkills(text);
+            if (kind === 'improve') applyImprovedExperience(text);
+        } catch (e) {
+            replaceLastPendingAssistant(`Error: ${String(e?.message || e || 'AI failed')}`);
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const buildPrompt = (kind) => {
+        if (kind === 'summary') {
+            const jobTitle = String(document.getElementById('jobTitle')?.value || '').trim();
+            return `Write a strong, ATS-friendly professional summary for the CV. Role/job title: ${jobTitle || 'Not specified'}. Keep it 3-5 lines. No emojis.`;
+        }
+        if (kind === 'skills') {
+            const jobTitle = String(document.getElementById('jobTitle')?.value || '').trim();
+            return `Suggest 12-18 relevant skills for this CV (mix of technical + soft skills). Role/job title: ${jobTitle || 'Not specified'}. Return ONLY a comma-separated list.`;
+        }
+        if (kind === 'improve') {
+            return 'Rewrite the FIRST work experience description into 4-6 impact-focused bullet points. Use hyphen bullets. Quantify where reasonable, but do not invent companies, tools, or numbers.';
+        }
+        return String(promptEl?.value || '').trim() || 'Improve this CV content for ATS.';
+    };
+
+    const run = (kind) => {
+        const prompt = buildPrompt(kind);
+        if (kind === 'custom' && !String(promptEl?.value || '').trim()) {
+            return;
+        }
+        return sendMessage({ kind: kind === 'custom' ? 'custom' : kind, prompt });
+    };
+
+    if (btnSummary) btnSummary.addEventListener('click', () => run('summary'));
+    if (btnSkills) btnSkills.addEventListener('click', () => run('skills'));
+    if (btnImprove) btnImprove.addEventListener('click', () => run('improve'));
+    if (btnRun) btnRun.addEventListener('click', () => run('custom'));
+
+    if (promptEl) {
+        promptEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                run('custom');
+            }
+        });
+    }
+
+    if (btnClear) {
+        btnClear.addEventListener('click', () => {
+            messages.splice(0, messages.length);
+            renderMessages();
+        });
+    }
+
+    if (btnCopy) {
+        btnCopy.addEventListener('click', async () => {
+            const text = String(getLastAssistant() || '').trim();
+            if (!text) return;
+            try {
+                await navigator.clipboard.writeText(text);
+            } catch {
+                // Fallback
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.left = '-9999px';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                ta.remove();
+            }
+        });
+    }
+
+    renderMessages();
+}
 
 function getLayoutClassForStyle(styleId) {
     const match = String(styleId).match(/(\d+)/);
@@ -184,6 +950,7 @@ function addSkillsFromInput() {
     input.value = '';
     renderSkillsChips();
     syncSkillsHiddenValue();
+    scheduleSaveDraft();
 }
 
 function removeSkill(skill) {
@@ -191,6 +958,7 @@ function removeSkill(skill) {
     skillsList = skillsList.filter(s => s.toLowerCase() !== target);
     renderSkillsChips();
     syncSkillsHiddenValue();
+    scheduleSaveDraft();
 }
 
 function syncSkillsHiddenValue() {
@@ -283,6 +1051,7 @@ function setupProfilePhotoUpload() {
         const file = input.files && input.files[0];
         if (!file) {
             profilePhotoDataUrl = '';
+            scheduleSaveDraft();
             return;
         }
 
@@ -290,6 +1059,7 @@ function setupProfilePhotoUpload() {
             alert('Please select an image file.');
             input.value = '';
             profilePhotoDataUrl = '';
+            scheduleSaveDraft();
             return;
         }
 
@@ -299,12 +1069,14 @@ function setupProfilePhotoUpload() {
             alert('Image is too large. Please use an image under 2MB.');
             input.value = '';
             profilePhotoDataUrl = '';
+            scheduleSaveDraft();
             return;
         }
 
         resizeImageFileToDataUrl(file)
             .then((dataUrl) => {
                 profilePhotoDataUrl = String(dataUrl || '');
+                scheduleSaveDraft();
                 const preview = document.getElementById('cvPreview');
                 if (preview && preview.querySelector('.cv-header')) {
                     generateCV();
@@ -315,6 +1087,7 @@ function setupProfilePhotoUpload() {
                 const reader = new FileReader();
                 reader.onload = () => {
                     profilePhotoDataUrl = String(reader.result || '');
+                    scheduleSaveDraft();
                     const preview = document.getElementById('cvPreview');
                     if (preview && preview.querySelector('.cv-header')) {
                         generateCV();
@@ -690,6 +1463,8 @@ function selectStyle(styleId) {
     console.log('Selected template:', templateName);
 
     updateCvThemeBadge();
+
+    scheduleSaveDraft();
 }
 
 // Toggle Reviews Modal
@@ -987,7 +1762,7 @@ function generateCV() {
 }
 
 // Download PDF
-function downloadPDF() {
+async function downloadPDF() {
     const preview = document.getElementById('cvPreview');
     
     if (!preview.querySelector('.cv-header')) {
@@ -995,20 +1770,50 @@ function downloadPDF() {
         return;
     }
     
-    // Ensure the latest layout is painted before invoking print (helps avoid blank PDFs).
+    // Ensure the latest layout is painted and assets (especially the profile photo) are decoded
+    // before invoking print. Some browsers can otherwise render/crop images in the PDF.
     preview.classList.remove('is-animating');
-    const doPrint = () => {
-        try {
-            window.print();
-        } finally {
-            // Re-enable animations for the UI after print.
-            preview.classList.remove('is-animating');
+
+    const images = Array.from(preview.querySelectorAll('img'));
+    const waitForImage = (img) => {
+        if (!img) return Promise.resolve();
+
+        // If already loaded, try to decode (best effort).
+        if (img.complete && img.naturalWidth > 0) {
+            if (typeof img.decode === 'function') {
+                return img.decode().catch(() => undefined);
+            }
+            return Promise.resolve();
         }
+
+        // Otherwise wait for load/error.
+        return new Promise((resolve) => {
+            const done = () => {
+                img.removeEventListener('load', done);
+                img.removeEventListener('error', done);
+                // Attempt decode after load (best effort).
+                if (typeof img.decode === 'function') {
+                    img.decode().catch(() => undefined).finally(resolve);
+                } else {
+                    resolve();
+                }
+            };
+            img.addEventListener('load', done, { once: true });
+            img.addEventListener('error', done, { once: true });
+        });
     };
 
-    requestAnimationFrame(() => {
-        requestAnimationFrame(doPrint);
-    });
+    try {
+        await Promise.all(images.map(waitForImage));
+    } catch {
+        // Best effort only — printing should still proceed.
+    }
+
+    // Two RAFs ensures styles/layout are committed right before printing.
+    await new Promise(requestAnimationFrame);
+    await new Promise(requestAnimationFrame);
+
+    window.print();
 }
 
 // Clear Form
@@ -1055,5 +1860,7 @@ function clearForm() {
                 <p class="hint">Fill in the form and click "Preview CV"</p>
             </div>
         `;
+
+        clearCvDraft();
     }
 }

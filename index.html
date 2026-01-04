@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Free CV Builder - Create Your Professional Resume</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cpath d='M20 14h16l8 8v28a4 4 0 0 1-4 4H20a4 4 0 0 1-4-4V18a4 4 0 0 1 4-4Z' fill='white' opacity='0.95'/%3E%3Cpath d='M36 14v10h10' fill='%23bfdbfe'/%3E%3Cpath d='M24 30h16M24 38h16M24 46h12' stroke='%232563eb' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="style.css?v=20260103">
+    <link rel="stylesheet" href="style.css?v=20260104">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -14,10 +14,16 @@
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <h1><i class="fas fa-file-alt"></i> Free CV Builder</h1>
-                    <p>Create Your Professional Resume in Minutes</p>
+                    <p>Fill in the blanks, pick a template, and download in minutes</p>
                 </div>
-                <div style="display: flex; align-items: center; gap: 15px; opacity: 0.9; font-weight: 600;">
-                    <span>Free • No Login Required</span>
+                <div style="display: flex; align-items: center; gap: 12px; opacity: 0.95; font-weight: 600; flex-wrap: wrap; justify-content: flex-end;">
+                    <span id="authStatusText">Free • Optional Login</span>
+                    <a id="authSignInLink" class="btn-outline" href="login.html" style="text-decoration: none;">
+                        <i class="fas fa-user"></i> Sign in
+                    </a>
+                    <button id="authSignOutBtn" type="button" class="btn-outline" style="display:none;">
+                        <i class="fas fa-right-from-bracket"></i> Sign out
+                    </button>
                 </div>
             </div>
         </header>
@@ -25,6 +31,27 @@
         <div class="main-content">
             <!-- Form Section -->
             <div class="form-section">
+                <div class="wizard-header" id="wizardHeader">
+                    <div class="wizard-steps" role="tablist" aria-label="CV Builder Steps">
+                        <button type="button" class="wizard-step is-active" data-step="1" aria-current="step">
+                            <span class="wizard-step-num">1</span>
+                            <span class="wizard-step-text">Fill in the blanks</span>
+                        </button>
+                        <button type="button" class="wizard-step" data-step="2">
+                            <span class="wizard-step-num">2</span>
+                            <span class="wizard-step-text">Pick a template</span>
+                        </button>
+                        <button type="button" class="wizard-step" data-step="3">
+                            <span class="wizard-step-num">3</span>
+                            <span class="wizard-step-text">Download</span>
+                        </button>
+                    </div>
+                    <div class="wizard-progress" aria-hidden="true">
+                        <div class="wizard-progress-bar" id="wizardProgressBar"></div>
+                    </div>
+                </div>
+
+                <div class="wizard-panel" id="wizardStep1" data-step="1">
                 <div class="form-card">
                     <h2><i class="fas fa-user"></i> Personal Information</h2>
                     <div class="form-group required">
@@ -116,16 +143,98 @@
                     </button>
                 </div>
 
-                <div class="action-buttons">
-                    <button type="button" class="btn-primary" onclick="generateCV()">
-                        <i class="fas fa-eye"></i> Preview CV
+                <div class="form-card ai-card" id="aiAssistantCard">
+                    <h2><i class="fas fa-robot"></i> AI Assistant</h2>
+                    <p class="ai-subtitle">Chat to generate ATS-friendly content (summary, skills, bullets).</p>
+
+                    <div class="ai-quick-actions" aria-label="Quick actions">
+                        <button type="button" class="btn-outline ai-action" id="aiGenerateSummaryBtn">
+                            <i class="fas fa-wand-magic-sparkles"></i> Summary
+                        </button>
+                        <button type="button" class="btn-outline ai-action" id="aiSuggestSkillsBtn">
+                            <i class="fas fa-lightbulb"></i> Skills
+                        </button>
+                        <button type="button" class="btn-outline ai-action" id="aiImproveExperienceBtn">
+                            <i class="fas fa-pen"></i> Bullets
+                        </button>
+                        <button type="button" class="btn-outline ai-action" id="aiClearChatBtn">
+                            <i class="fas fa-trash"></i> Clear
+                        </button>
+                    </div>
+
+                    <div class="ai-chat" role="region" aria-label="AI chat">
+                        <div class="ai-messages" id="aiMessages" aria-live="polite"></div>
+                        <div class="ai-composer">
+                            <label class="sr-only" for="aiPrompt">Message</label>
+                            <textarea id="aiPrompt" rows="2" placeholder="Ask: write my summary, improve bullets, suggest skills..." ></textarea>
+                            <button type="button" class="btn-secondary" id="aiRunCustomBtn">
+                                <i class="fas fa-paper-plane"></i> Send
+                            </button>
+                        </div>
+                        <div class="ai-footer">
+                            <div class="ai-hint" id="aiHint">Tip: Fill Experience/Skills first for best results.</div>
+                            <button type="button" class="btn-outline" id="aiCopyBtn" disabled>
+                                <i class="fas fa-copy"></i> Copy last answer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wizard-nav">
+                    <button type="button" class="btn-primary" id="wizardNext1">
+                        <i class="fas fa-arrow-right"></i> Next: Pick a template
                     </button>
-                    <button type="button" class="btn-secondary" onclick="downloadPDF()">
-                        <i class="fas fa-download"></i> Download PDF
-                    </button>
-                    <button type="button" class="btn-outline" onclick="clearForm()">
-                        <i class="fas fa-redo"></i> Clear All
-                    </button>
+                </div>
+                </div>
+
+                <div class="wizard-panel" id="wizardStep2" data-step="2" style="display: none;">
+                    <div class="form-card">
+                        <h2><i class="fas fa-palette"></i> Pick a Template</h2>
+                        <p class="ai-subtitle">Choose a style and see it instantly in the preview.</p>
+                        <div class="wizard-template-actions">
+                            <button type="button" class="btn-outline" onclick="toggleStyleGrid()">
+                                <i class="fas fa-th"></i> Browse 100 Styles
+                            </button>
+                            <button type="button" class="btn-primary" id="wizardPreviewBtn">
+                                <i class="fas fa-eye"></i> Refresh Preview
+                            </button>
+                        </div>
+                        <div class="wizard-note" id="wizardTemplateNote">Tip: After selecting a style, go to Download step.</div>
+                    </div>
+
+                    <div class="wizard-nav">
+                        <button type="button" class="btn-outline" id="wizardBack2">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </button>
+                        <button type="button" class="btn-primary" id="wizardNext2">
+                            <i class="fas fa-arrow-right"></i> Next: Download
+                        </button>
+                    </div>
+                </div>
+
+                <div class="wizard-panel" id="wizardStep3" data-step="3" style="display: none;">
+                    <div class="form-card">
+                        <h2><i class="fas fa-download"></i> Download your CV</h2>
+                        <p class="ai-subtitle">Preview and download as PDF (Print → Save as PDF).</p>
+                        <div class="action-buttons">
+                            <button type="button" class="btn-primary" onclick="generateCV()">
+                                <i class="fas fa-eye"></i> Preview CV
+                            </button>
+                            <button type="button" class="btn-secondary" onclick="downloadPDF()">
+                                <i class="fas fa-download"></i> Download PDF
+                            </button>
+                            <button type="button" class="btn-outline" onclick="clearForm()">
+                                <i class="fas fa-redo"></i> Clear All
+                            </button>
+                        </div>
+                        <div class="wizard-note">If PDF looks odd: try Chrome/Edge and ensure “Background graphics” is enabled.</div>
+                    </div>
+
+                    <div class="wizard-nav">
+                        <button type="button" class="btn-outline" id="wizardBack3">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -241,10 +350,15 @@
         </div>
         <div class="footer-bottom">
             <p>&copy; 2026 <strong>Free CV Builder</strong> | All Rights Reserved</p>
-            <p>Made with <i class="fas fa-heart"></i> by <strong>Abid</strong> | Version 2.0</p>
+            <p>Made with <i class="fas fa-heart"></i> by <strong>Abid</strong> | Version 2.1</p>
         </div>
     </footer>
 
-    <script src="app.js?v=20260103"></script>
+    <!-- Firebase Auth (optional) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script src="app.js?v=20260104"></script>
 </body>
 </html>

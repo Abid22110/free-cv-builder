@@ -261,10 +261,6 @@
     </style>
 </head>
 <body>
-    <script>
-        // Login has been removed. Redirect to the main app.
-        window.location.replace('index.html');
-    </script>
     <div class="auth-container">
         <div class="auth-header">
             <i class="fas fa-user-circle"></i>
@@ -292,7 +288,7 @@
             <div class="error-message" id="errorMessage"></div>
 
             <div class="forgot-password">
-                <a href="#">Forgot Password?</a>
+                <a href="#" id="forgotPasswordLink">Forgot Password?</a>
             </div>
 
             <button type="submit" class="btn-login">
@@ -305,6 +301,11 @@
             <span>OR</span>
         </div>
 
+        <button type="button" class="btn-login" id="googleLoginBtn" style="background: #111827;">
+            <i class="fab fa-google"></i>
+            Continue with Google
+        </button>
+
         <div class="signup-link">
             Don't have an account? <a href="signup.html">Sign Up</a>
         </div>
@@ -316,6 +317,11 @@
         </div>
     </div>
 
+    <!-- Firebase Auth (required for login) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
     <script>
         function isStaticHostingDemo() {
             return (
@@ -323,6 +329,80 @@
                 window.location.protocol === 'file:'
             );
         }
+
+        function ensureFirebaseConfigured() {
+            const cfg = window.FIREBASE_CONFIG;
+            if (!window.firebase || !cfg || !cfg.apiKey || String(cfg.apiKey) === 'REPLACE_ME') {
+                const errorMessage = document.getElementById('errorMessage');
+                errorMessage.textContent = 'Firebase login is not configured. Open firebase-config.js and paste your Firebase Web App config.';
+                errorMessage.classList.add('show');
+                return false;
+            }
+            if (!firebase.apps || !firebase.apps.length) {
+                firebase.initializeApp(cfg);
+            }
+            return true;
+        }
+
+        async function signInWithGoogle() {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.classList.remove('show');
+
+            if (!ensureFirebaseConfigured()) return;
+
+            const auth = firebase.auth();
+            const provider = new firebase.auth.GoogleAuthProvider();
+
+            try {
+                await auth.signInWithPopup(provider);
+                window.location.href = '/';
+            } catch (err) {
+                // Popup can be blocked; fallback to redirect.
+                try {
+                    await auth.signInWithRedirect(provider);
+                } catch (err2) {
+                    if (isStaticHostingDemo()) {
+                        errorMessage.textContent = 'Google login needs a proper domain (localhost or deployed). Avoid opening via file:// and ensure Authorized domains is set in Firebase.';
+                    } else {
+                        errorMessage.textContent = String(err2?.message || err?.message || 'Google login failed');
+                    }
+                    errorMessage.classList.add('show');
+                }
+            }
+        }
+
+        async function sendResetEmail() {
+            const email = String(document.getElementById('email')?.value || '').trim();
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.classList.remove('show');
+
+            if (!ensureFirebaseConfigured()) return;
+            if (!email) {
+                errorMessage.textContent = 'Enter your email first.';
+                errorMessage.classList.add('show');
+                return;
+            }
+
+            try {
+                await firebase.auth().sendPasswordResetEmail(email);
+                errorMessage.textContent = 'Password reset email sent (check inbox/spam).';
+                errorMessage.style.color = '#10b981';
+                errorMessage.classList.add('show');
+            } catch (err) {
+                errorMessage.style.color = '#ef4444';
+                errorMessage.textContent = String(err?.message || 'Failed to send reset email');
+                errorMessage.classList.add('show');
+            }
+        }
+
+        document.getElementById('googleLoginBtn')?.addEventListener('click', () => {
+            signInWithGoogle();
+        });
+
+        document.getElementById('forgotPasswordLink')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            sendResetEmail();
+        });
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -337,29 +417,19 @@
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
 
             try {
-                const response = await fetch('api/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email, password })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    window.location.href = '/';
-                } else {
-                    errorMessage.textContent = data.message || 'Login failed. Please try again.';
-                    errorMessage.classList.add('show');
+                if (!ensureFirebaseConfigured()) {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+                    return;
                 }
+
+                await firebase.auth().signInWithEmailAndPassword(email, password);
+                window.location.href = '/';
             } catch (error) {
                 if (isStaticHostingDemo()) {
-                    errorMessage.textContent = 'You are on GitHub Pages (static). Login works only on your server host URL (Glitch/Render). Open the deployed server URL and try again.';
+                    errorMessage.textContent = 'Login needs a proper domain (localhost or deployed). Avoid opening via file:// and ensure Authorized domains is set in Firebase.';
                 } else {
-                    errorMessage.textContent = 'Network error. Please try again.';
+                    errorMessage.textContent = String(error?.message || 'Login failed. Please try again.');
                 }
                 errorMessage.classList.add('show');
                 submitBtn.disabled = false;

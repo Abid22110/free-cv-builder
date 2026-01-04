@@ -1,4 +1,4 @@
-# 🎓 Free CV Builder v2.0
+# 🎓 Free CV Builder v2.1
 
 A professional, modern CV/Resume builder web application with **100+ premium templates**, no login required, and deployment ready!
 
@@ -15,12 +15,12 @@ A professional, modern CV/Resume builder web application with **100+ premium tem
 - Real-time template switching
 - Smooth animations and transitions
 
-### 🔐 **Secure Authentication**
-- User registration (Signup)
-- Secure login with bcryptjs password hashing
-- Session management (24-hour duration)
-- Protected routes for authenticated users
-- Logout functionality
+### ✅ **No Login Required**
+- Works instantly in the browser
+- No accounts or passwords
+- Your CV data stays on your device unless you choose to share it
+
+> Login is now **optional** (Google + Email/Password) if you want a more “premium” experience.
 
 ### 📝 **Complete CV Builder**
 - **Personal Information**: Name, job title, email, phone, location, website
@@ -40,7 +40,13 @@ A professional, modern CV/Resume builder web application with **100+ premium tem
 - One-click PDF download
 - Professional formatting
 - Styled based on selected template
-- Authentication-protected
+- Print → Save as PDF
+
+### 🤖 **AI Assistant (Optional)**
+- Generates ATS-friendly summaries
+- Suggests relevant skills
+- Improves experience bullet points
+- Runs via server-side API (`/api/ai`) so your API key stays private
 
 ### 📱 **Responsive Design**
 - Works on all devices (Mobile, Tablet, Desktop)
@@ -51,16 +57,14 @@ A professional, modern CV/Resume builder web application with **100+ premium tem
 ### 🚀 **Modern Tech Stack**
 - Frontend: HTML5, CSS3, Vanilla JavaScript
 - Backend: Node.js, Express.js
-- Authentication: bcryptjs, express-session
 - Process Management: PM2 (auto-restart, monitoring)
-- Database: JSON (upgradeable to MongoDB)
+- Storage: none by default (no user accounts)
 
 ---
 
 ## 📋 What's Included
 
 ✅ 100 unique CV templates with custom styling  
-✅ User authentication system (Login/Signup)  
 ✅ Modern animations and hover effects  
 ✅ Mobile-responsive design  
 ✅ PM2 process management  
@@ -92,13 +96,42 @@ npm start
 
 **Access**: http://localhost:3001
 
+### AI Assistant Setup (Optional)
+1. Copy `.env.example` to `.env` (or set environment variables in your hosting provider)
+2. Set `OPENAI_API_KEY`
+3. Restart the server
+
+If `OPENAI_API_KEY` is not set, the AI Assistant UI will still show, but requests will return a friendly “not configured” error.
+
+### Optional Login (Firebase Auth)
+This project includes a nice login/signup UI powered by **Firebase Authentication** (Google + Email/Password).
+
+1) Create a Firebase project: https://console.firebase.google.com/
+2) Add a **Web App** and copy the config values
+3) Firebase Console → Authentication → Sign-in method:
+	- Enable **Google**
+	- Enable **Email/Password**
+4) Firebase Console → Authentication → Settings → Authorized domains:
+	- Add your domain (and `localhost` for local dev)
+5) Open [firebase-config.js](firebase-config.js) and replace the `REPLACE_ME` values
+
+Then open `/login.html` or click “Sign in” in the header.
+
+### New Step-by-Step Flow
+The builder now uses a 3-step wizard:
+1) Fill in the blanks → 2) Pick a template → 3) Download
+
+You can still use the live preview panel on the right at all times.
+
+### Verification Checklist (Manual)
+- Step 1: Fill required fields (Full Name, Job Title, Email)
+- Step 1: Click “Generate Summary / Suggest Skills / Improve Experience Bullets” (AI requires `OPENAI_API_KEY`)
+- Step 2: Open “Browse 100 Styles” and select a template
+- Step 3: Preview → Download PDF (Print → Save as PDF)
+
 On Windows, use `npm start` (the `start.sh` script is for bash/Linux).
 
-### Test Account
-```
-Email: test@example.com
-Password: password123
-```
+If you see `node` / `npm` “not recognized” on Windows, install Node.js (LTS) and reopen PowerShell so PATH updates apply.
 
 ---
 
@@ -155,15 +188,15 @@ git push heroku main
 ```
 cv-builder/
 ├── index.html           # Main CV builder app
-├── login.html          # Login page
-├── signup.html         # Registration page
+├── login.html          # Legacy (redirects to /)
+├── signup.html         # Legacy (redirects to /)
 ├── app.js              # Frontend logic (templates, reviews)
-├── server.js           # Express backend (auth, API)
+├── server.js           # Express backend (static + AI API)
 ├── style.css           # All styling (100 templates)
 ├── package.json        # Dependencies
 ├── ecosystem.config.js # PM2 config
 ├── start.sh            # Startup script
-├── users.json          # User database
+├── users.json          # Legacy file (not used in no-login mode)
 ├── DEPLOYMENT.md       # Deployment guide
 └── README.md           # This file
 ```
@@ -172,25 +205,24 @@ cv-builder/
 
 ## 🎯 Usage Steps
 
-### 1. **Register/Login**
-- Click Signup to create account
-- Or use test account credentials
-
-### 2. **Fill Your Information**
+### 1. **Fill Your Information**
 - Personal details
 - Work experience
 - Education
 - Skills
 - Languages
 
-### 3. **Select a Template**
-- Click "Show All Styles"
+Optional:
+- Use **AI Assistant** to generate Summary / Skills / Bullets
+
+### 2. **Pick a Template**
+- Click **Browse 100 Styles**
 - Choose from 100 templates
 - See instant preview
 
-### 4. **Preview & Download**
-- Click "Preview CV"
-- Click "Download PDF"
+### 3. **Preview & Download**
+- Click **Preview CV**
+- Click **Download PDF**
 - Share with employers!
 
 ---
@@ -201,10 +233,7 @@ cv-builder/
 |-----------|-----------|
 | Frontend | HTML5, CSS3, Vanilla JavaScript |
 | Backend | Node.js, Express.js v4.18.2 |
-| Authentication | bcryptjs v2.4.3 |
-| Sessions | express-session v1.17.3 |
 | Process Management | PM2 |
-| Database | JSON (MongoDB ready) |
 | Icons | Font Awesome 6.4.0 |
 | Package Manager | npm |
 
@@ -212,12 +241,9 @@ cv-builder/
 
 ## 🔐 Security Features
 
-- ✅ Password hashing with bcryptjs
-- ✅ Secure session management
-- ✅ Protected download functionality
-- ✅ Input validation
-- ✅ CSRF protection ready
-- ✅ User data isolation
+- ✅ Input escaping/sanitization for CV preview rendering
+- ✅ No login/accounts required
+- ✅ AI API key stays server-side (never shipped to the browser)
 
 ---
 
