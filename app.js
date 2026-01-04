@@ -11,6 +11,142 @@ const CV_DRAFT_STORAGE_PREFIX = 'free-cv-builder:draft:v2.1';
 let currentAuthUid = null;
 let draftSaveTimer = null;
 
+let cloudSaveTimer = null;
+let firestoreDb = null;
+
+function isFirebaseConfigured(cfg) {
+    return !!(cfg?.apiKey && String(cfg.apiKey) !== 'REPLACE_ME');
+}
+
+function getFirebaseConfigFromFileOrStorage() {
+    const fromFile = typeof window !== 'undefined' ? window.FIREBASE_CONFIG : null;
+    if (isFirebaseConfigured(fromFile)) return fromFile;
+
+    try {
+        const raw = localStorage.getItem('free-cv-builder:firebase-config');
+        const override = raw ? safeJsonParse(raw) : null;
+        if (isFirebaseConfigured(override)) return override;
+    } catch {
+        // ignore
+    }
+
+    return fromFile;
+}
+
+function ensureFirestoreReady() {
+    if (firestoreDb) return firestoreDb;
+
+    const firebaseAvailable = typeof window !== 'undefined' && window.firebase;
+    if (!firebaseAvailable) return null;
+
+    const cfg = getFirebaseConfigFromFileOrStorage();
+    if (!isFirebaseConfigured(cfg)) return null;
+
+    try {
+        if (!firebase.apps || !firebase.apps.length) {
+            firebase.initializeApp(cfg);
+        }
+        if (!firebase.firestore) return null;
+
+        firestoreDb = firebase.firestore();
+        return firestoreDb;
+    } catch {
+        return null;
+    }
+}
+
+function getCloudDraftRef(uid) {
+    const db = ensureFirestoreReady();
+    if (!db) return null;
+    const safeUid = String(uid || '').trim();
+    if (!safeUid) return null;
+    return db.collection('freeCvBuilderDrafts').doc(safeUid);
+}
+
+function getLocalDraftObject(uid) {
+    try {
+        const raw = localStorage.getItem(getDraftStorageKey(uid));
+        const parsed = raw ? safeJsonParse(raw) : null;
+        return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch {
+        return null;
+    }
+}
+
+async function fetchCloudDraft(uid) {
+    const ref = getCloudDraftRef(uid);
+    if (!ref) return null;
+    try {
+        const snap = await ref.get();
+        if (!snap.exists) return null;
+        const data = snap.data();
+        const draft = data?.draft;
+        return draft && typeof draft === 'object' ? draft : null;
+    } catch {
+        return null;
+    }
+}
+
+async function saveCloudDraft(uid, draft) {
+    const ref = getCloudDraftRef(uid);
+    if (!ref) return;
+    try {
+        await ref.set({
+            updatedAt: Date.now(),
+            draft
+        }, { merge: true });
+    } catch {
+        // ignore
+    }
+}
+
+async function syncDraftWithCloud(uid) {
+    const safeUid = String(uid || '').trim();
+    if (!safeUid) return;
+    if (!ensureFirestoreReady()) return;
+
+    const local = getLocalDraftObject(safeUid);
+    const cloud = await fetchCloudDraft(safeUid);
+
+    const localTs = Number(local?.savedAt || 0);
+    const cloudTs = Number(cloud?.savedAt || 0);
+
+    // Prefer newer draft (cloud wins only if clearly newer).
+    if (cloud && cloudTs > localTs + 1500) {
+        try {
+            localStorage.setItem(getDraftStorageKey(safeUid), JSON.stringify(cloud));
+        } catch {
+            // ignore
+        }
+        loadCvDraft({ storageKey: getDraftStorageKey(safeUid) });
+        return;
+    }
+
+    if (local) {
+        await saveCloudDraft(safeUid, local);
+    }
+}
+
+function scheduleCloudSaveDraft(delayMs = 900) {
+    if (!currentAuthUid) return;
+    if (!ensureFirestoreReady()) return;
+
+    if (cloudSaveTimer) {
+        clearTimeout(cloudSaveTimer);
+        cloudSaveTimer = null;
+    }
+
+    cloudSaveTimer = setTimeout(async () => {
+        cloudSaveTimer = null;
+        try {
+            const draft = getLocalDraftObject(currentAuthUid) || collectCvDraft();
+            await saveCloudDraft(currentAuthUid, draft);
+        } catch {
+            // ignore
+        }
+    }, delayMs);
+}
+
 function getStoredAppConfig() {
     try {
         const raw = localStorage.getItem('free-cv-builder:app-config');
@@ -57,6 +193,11 @@ function switchDraftOwner(uid) {
 
     currentAuthUid = nextUid;
     loadCvDraft({ storageKey: nextKey });
+
+    if (nextUid) {
+        // Fire-and-forget.
+        syncDraftWithCloud(nextUid);
+    }
 }
 
 function safeJsonParse(value) {
@@ -120,7 +261,10 @@ function collectCvDraft() {
             aiChatMessages = chat
                 .getMessages()
                 .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && !m.pending)
-                .map((m) => ({ role: m.role, content: String(m.content || '').trim() }))
+                .map((m) => ({
+                    role: String(m.role || '').slice(0, 32),
+                    content: String(m.content || '').trim().slice(0, 2000)
+                }))
                 .filter((m) => m.content)
                 .slice(-20);
         }
@@ -156,6 +300,7 @@ function saveCvDraft() {
     try {
         const draft = collectCvDraft();
         localStorage.setItem(getDraftStorageKey(), JSON.stringify(draft));
+        scheduleCloudSaveDraft();
     } catch {
         // Ignore storage failures (quota/private mode).
     }
