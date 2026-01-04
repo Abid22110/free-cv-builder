@@ -11,6 +11,24 @@ const CV_DRAFT_STORAGE_PREFIX = 'free-cv-builder:draft:v2.1';
 let currentAuthUid = null;
 let draftSaveTimer = null;
 
+function getStoredAppConfig() {
+    try {
+        const raw = localStorage.getItem('free-cv-builder:app-config');
+        const parsed = raw ? safeJsonParse(raw) : null;
+        return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch {
+        return null;
+    }
+}
+
+function applyStoredAppConfig() {
+    const base = (typeof window !== 'undefined' && window.APP_CONFIG && typeof window.APP_CONFIG === 'object')
+        ? window.APP_CONFIG
+        : {};
+    const override = getStoredAppConfig() || {};
+    window.APP_CONFIG = { ...base, ...override };
+}
+
 function getDraftStorageKey(uid = currentAuthUid) {
     const owner = uid ? String(uid) : 'guest';
     return `${CV_DRAFT_STORAGE_PREFIX}:${owner}`;
@@ -424,6 +442,7 @@ function updateCvThemeBadge() {
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
+    applyStoredAppConfig();
     initializeStyleGrid();
     addExperience();
     addEducation();
@@ -434,6 +453,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     setupAiAssistant();
     setupWizard();
     setupAuthUi();
+    setupQuickSetup();
 
     // Restore a saved draft if present.
     loadCvDraft();
@@ -452,12 +472,134 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+function setupQuickSetup() {
+    const card = document.getElementById('quickSetupCard');
+    if (!card) return;
+
+    const subtitle = document.getElementById('quickSetupSubtitle');
+
+    const firebaseTa = document.getElementById('quickFirebaseConfig');
+    const saveFirebaseBtn = document.getElementById('quickSaveFirebaseBtn');
+    const firebaseNote = document.getElementById('quickFirebaseNote');
+
+    const aiUrlInput = document.getElementById('quickAiBaseUrl');
+    const saveAiBtn = document.getElementById('quickSaveAiBtn');
+    const aiNote = document.getElementById('quickAiNote');
+
+    const resetBtn = document.getElementById('quickResetSetupBtn');
+
+    const isConfiguredFirebase = (cfg) => !!(cfg?.apiKey && String(cfg.apiKey) !== 'REPLACE_ME');
+
+    const getFirebaseConfig = () => {
+        const fromFile = typeof window !== 'undefined' ? window.FIREBASE_CONFIG : null;
+        if (isConfiguredFirebase(fromFile)) return fromFile;
+        try {
+            const raw = localStorage.getItem('free-cv-builder:firebase-config');
+            const override = raw ? safeJsonParse(raw) : null;
+            if (isConfiguredFirebase(override)) return override;
+        } catch {
+            // ignore
+        }
+        return fromFile;
+    };
+
+    const getAiBaseUrl = () => String(window.APP_CONFIG?.AI_API_BASE_URL || '').trim();
+    const isStaticHost = window.location.hostname.endsWith('github.io') || window.location.protocol === 'file:';
+
+    const refresh = () => {
+        const fbOk = isConfiguredFirebase(getFirebaseConfig());
+        const aiUrl = getAiBaseUrl();
+        const aiOk = !isStaticHost || !!aiUrl;
+
+        // Show setup card if something relevant is missing.
+        const shouldShow = !fbOk || (isStaticHost && !aiUrl);
+        card.style.display = shouldShow ? '' : 'none';
+
+        if (subtitle) {
+            const parts = [];
+            parts.push(fbOk ? 'Login: ready' : 'Login: needs Firebase config');
+            parts.push(isStaticHost ? (aiOk ? 'AI: ready (backend URL set)' : 'AI: needs backend URL') : 'AI: server mode');
+            subtitle.textContent = parts.join(' • ');
+        }
+
+        if (aiUrlInput) aiUrlInput.value = aiUrl;
+
+        if (firebaseNote) {
+            firebaseNote.style.display = fbOk ? 'none' : '';
+            if (!fbOk) {
+                firebaseNote.textContent = 'Tip: Firebase Console → Project settings → Your apps → Web app config.';
+            }
+        }
+
+        if (aiNote) {
+            aiNote.style.display = (isStaticHost && !aiUrl) ? '' : 'none';
+            if (isStaticHost && !aiUrl) {
+                aiNote.textContent = 'GitHub Pages is static. Deploy backend (Render/Railway/Glitch) then paste its URL above.';
+            }
+        }
+    };
+
+    const showMsg = (el, msg) => {
+        if (!el) return;
+        el.style.display = '';
+        el.textContent = msg;
+    };
+
+    saveFirebaseBtn?.addEventListener('click', () => {
+        try {
+            const parsed = safeJsonParse(String(firebaseTa?.value || '').trim());
+            if (!parsed || !parsed.apiKey || !parsed.authDomain) {
+                showMsg(firebaseNote, 'Invalid JSON. Must include apiKey + authDomain.');
+                return;
+            }
+            localStorage.setItem('free-cv-builder:firebase-config', JSON.stringify(parsed));
+            showMsg(firebaseNote, 'Saved Firebase config. Reloading…');
+            setTimeout(() => window.location.reload(), 350);
+        } catch {
+            showMsg(firebaseNote, 'Failed to save Firebase config (storage blocked).');
+        }
+    });
+
+    saveAiBtn?.addEventListener('click', () => {
+        try {
+            const url = String(aiUrlInput?.value || '').trim();
+            const next = { AI_API_BASE_URL: url };
+            localStorage.setItem('free-cv-builder:app-config', JSON.stringify(next));
+            applyStoredAppConfig();
+            showMsg(aiNote, 'Saved AI backend URL. Reloading…');
+            setTimeout(() => window.location.reload(), 350);
+        } catch {
+            showMsg(aiNote, 'Failed to save AI backend URL (storage blocked).');
+        }
+    });
+
+    resetBtn?.addEventListener('click', () => {
+        try {
+            localStorage.removeItem('free-cv-builder:firebase-config');
+            localStorage.removeItem('free-cv-builder:app-config');
+            showMsg(aiNote, 'Reset done. Reloading…');
+            setTimeout(() => window.location.reload(), 350);
+        } catch {
+            // ignore
+        }
+    });
+
+    refresh();
+}
+
 function setupAuthUi() {
     const statusEl = document.getElementById('authStatusText');
     const signInLink = document.getElementById('authSignInLink');
     const signOutBtn = document.getElementById('authSignOutBtn');
 
     if (!statusEl || !signInLink || !signOutBtn) return;
+
+    try {
+        const next = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+        signInLink.href = `login.html?next=${encodeURIComponent(next)}`;
+    } catch {
+        // ignore
+    }
 
     const getFirebaseConfig = () => {
         const fromFile = typeof window !== 'undefined' ? window.FIREBASE_CONFIG : null;

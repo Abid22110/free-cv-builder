@@ -405,7 +405,7 @@
                 <a class="btn-signup" href="https://console.firebase.google.com/" target="_blank" rel="noreferrer" style="text-decoration:none;">
                     <i class="fas fa-arrow-up-right-from-square"></i> Open Firebase Console
                 </a>
-                <a class="btn-signup" href="index.html" style="text-decoration:none; background: linear-gradient(135deg, #64748b, #94a3b8);">
+                <a class="btn-signup" id="continueGuestLink" href="index.html" style="text-decoration:none; background: linear-gradient(135deg, #64748b, #94a3b8);">
                     <i class="fas fa-user"></i> Continue as Guest
                 </a>
             </div>
@@ -421,11 +421,11 @@
         </button>
 
         <div class="login-link">
-            Already have an account? <a href="login.html">Login</a>
+            Already have an account? <a id="goLoginLink" href="login.html">Login</a>
         </div>
 
         <div class="back-home">
-            <a href="index.html">
+            <a id="backHomeLink" href="index.html">
                 <i class="fas fa-arrow-left"></i> Back to Home
             </a>
         </div>
@@ -434,10 +434,47 @@
     <!-- Firebase Auth (required for signup) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="firebase-config.js?v=20260104-5"></script>
-    <script src="app-config.js?v=20260104-5"></script>
+    <script src="firebase-config.js?v=20260104-7"></script>
+    <script src="app-config.js?v=20260104-7"></script>
 
     <script>
+        function getSafeNextUrl() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const next = String(params.get('next') || '').trim();
+                if (!next) return 'index.html';
+                if (/^javascript:/i.test(next)) return 'index.html';
+                if (next.includes('://') || next.startsWith('//')) return 'index.html';
+                return next;
+            } catch {
+                return 'index.html';
+            }
+        }
+
+        function friendlyAuthError(err) {
+            const code = String(err?.code || '');
+            if (code === 'auth/invalid-email') return 'Invalid email address.';
+            if (code === 'auth/email-already-in-use') return 'This email is already registered. Try login instead.';
+            if (code === 'auth/weak-password') return 'Password is too weak. Use at least 6 characters.';
+            if (code === 'auth/too-many-requests') return 'Too many attempts. Please wait and try again.';
+            if (code === 'auth/popup-closed-by-user') return 'Popup closed. Please try again.';
+            if (code === 'auth/popup-blocked') return 'Popup blocked by browser. Allow popups and try again.';
+            return String(err?.message || 'Signup failed. Please try again.');
+        }
+
+        // Keep return URL when moving between auth pages.
+        try {
+            const next = getSafeNextUrl();
+            const toLogin = document.getElementById('goLoginLink');
+            const toHome = document.getElementById('backHomeLink');
+            const toGuest = document.getElementById('continueGuestLink');
+            if (toLogin) toLogin.href = `login.html?next=${encodeURIComponent(next)}`;
+            if (toHome) toHome.href = next || 'index.html';
+            if (toGuest) toGuest.href = next || 'index.html';
+        } catch {
+            // ignore
+        }
+
         function isStaticHostingDemo() {
             return (
                 window.location.hostname.endsWith('github.io') ||
@@ -482,6 +519,7 @@
             const ta = document.getElementById('firebaseConfigTextarea');
             const errorMessage = document.getElementById('errorMessage');
             errorMessage.classList.remove('show');
+            errorMessage.style.color = '';
             try {
                 const parsed = JSON.parse(String(ta?.value || '').trim());
                 if (!parsed || !parsed.apiKey || !parsed.authDomain) {
@@ -499,11 +537,25 @@
             }
         });
 
+        // Prefill textarea if config was already saved before.
+        try {
+            const raw = localStorage.getItem('free-cv-builder:firebase-config');
+            if (raw) {
+                const ta = document.getElementById('firebaseConfigTextarea');
+                if (ta && !String(ta.value || '').trim()) {
+                    ta.value = JSON.stringify(JSON.parse(raw), null, 2);
+                }
+            }
+        } catch {
+            // ignore
+        }
+
         async function signUpWithGoogle() {
             const errorMessage = document.getElementById('errorMessage');
             const successMessage = document.getElementById('successMessage');
             errorMessage.classList.remove('show');
             successMessage.classList.remove('show');
+            errorMessage.style.color = '';
 
             if (!ensureFirebaseConfigured()) return;
 
@@ -512,7 +564,7 @@
 
             try {
                 await auth.signInWithPopup(provider);
-                window.location.href = '/';
+                window.location.href = getSafeNextUrl();
             } catch (err) {
                 try {
                     await auth.signInWithRedirect(provider);
@@ -520,7 +572,7 @@
                     if (isStaticHostingDemo()) {
                         errorMessage.textContent = 'Google signup needs a proper domain (localhost or deployed). Avoid opening via file:// and ensure Authorized domains is set in Firebase.';
                     } else {
-                        errorMessage.textContent = String(err2?.message || err?.message || 'Google signup failed');
+                        errorMessage.textContent = friendlyAuthError(err2 || err);
                     }
                     errorMessage.classList.add('show');
                 }
@@ -567,6 +619,7 @@
 
             errorMessage.classList.remove('show');
             successMessage.classList.remove('show');
+            errorMessage.style.color = '';
 
             if (password !== confirmPassword) {
                 errorMessage.textContent = 'Passwords do not match!';
@@ -602,19 +655,30 @@
                 successMessage.textContent = 'Account created! Redirecting...';
                 successMessage.classList.add('show');
                 setTimeout(() => {
-                    window.location.href = '/';
+                    window.location.href = getSafeNextUrl();
                 }, 500);
             } catch (error) {
                 if (isStaticHostingDemo()) {
                     errorMessage.textContent = 'Signup needs a proper domain (localhost or deployed). Avoid opening via file:// and ensure Authorized domains is set in Firebase.';
                 } else {
-                    errorMessage.textContent = String(error?.message || 'Signup failed. Please try again.');
+                    errorMessage.textContent = friendlyAuthError(error);
                 }
                 errorMessage.classList.add('show');
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
             }
         });
+
+        // If already signed in, go back automatically.
+        try {
+            if (ensureFirebaseConfigured()) {
+                firebase.auth().onAuthStateChanged((user) => {
+                    if (user) window.location.href = getSafeNextUrl();
+                });
+            }
+        } catch {
+            // ignore
+        }
     </script>
 </body>
 </html>
