@@ -1,10 +1,15 @@
 # Hosting Note (Important)
 
-This project uses a Node/Express backend for authentication (`/api/login`, `/api/signup`, sessions).
+This project supports two modes:
 
-- GitHub Pages is **static hosting** and cannot run the backend. So login/signup cannot work on GitHub Pages.
-- For real login/signup, open the site using your backend host URL (Glitch/Render/Railway) such as:
-  - `https://<your-app>.glitch.me/login.html`
-  - `https://<your-app>.onrender.com/login.html`
+1) Static mode (GitHub Pages / any static host)
+- The CV builder UI works.
+- Optional login can work via **Firebase Auth** (Google + Email/Password).
+- The AI Assistant **will not work** because it needs a backend `/api/ai`.
 
-If you open `https://<username>.github.io/<repo>/`, the app will run in demo/static mode.
+2) Server mode (Render / Railway / Glitch)
+- Everything works including AI (because `/api/ai` exists).
+
+Notes:
+- If you want AI, deploy the Node server and set `OPENAI_API_KEY`.
+- If you only want login, Firebase Auth works fine even on static hosting.

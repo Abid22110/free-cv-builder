@@ -709,17 +709,34 @@ function setupAiAssistant() {
     };
 
     const postAi = async ({ prompt, context }) => {
-        const response = await fetch('/api/ai', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt, context })
-        });
+        const isStaticHostingDemo = () =>
+            window.location.hostname.endsWith('github.io') || window.location.protocol === 'file:';
 
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) {
-            throw new Error(data?.error || 'AI request failed');
+        try {
+            const response = await fetch('/api/ai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt, context })
+            });
+
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                if (response.status === 404 || response.status === 405) {
+                    throw new Error(
+                        'AI needs a backend server. Deploy with Render/Railway/Glitch (Node) and set OPENAI_API_KEY.'
+                    );
+                }
+                throw new Error(data?.error || 'AI request failed');
+            }
+            return String(data?.text || '').trim();
+        } catch (err) {
+            if (isStaticHostingDemo()) {
+                throw new Error(
+                    'AI chat will not work on GitHub Pages/file://. Use a Node host (Render/Railway/Glitch) and set OPENAI_API_KEY.'
+                );
+            }
+            throw err;
         }
-        return String(data?.text || '').trim();
     };
 
     const getAiContext = () => {

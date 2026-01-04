@@ -2,7 +2,7 @@
 
 ## ✅ Current Status
 - ✔️ **Local Development**: Running on http://localhost:3001
-- ✔️ **All Features**: Complete & Tested
+- ✔️ **App Features**: CV builder + templates + PDF + AI (optional)
 - ✔️ **GitHub Repository**: https://github.com/Abid22110/free-cv-builder
 - ✔️ **Server Management**: PM2 with auto-restart
 
@@ -12,16 +12,15 @@
 
 ### Features Implemented:
 - ✅ 100+ Premium CV Templates with unique styles
-- ✅ User Authentication (Login/Signup)
+- ✅ Optional Login/Signup (Firebase Auth: Google + Email/Password)
 - ✅ Modern UI with smooth animations
-- ✅ One-click PDF Download (Protected)
+- ✅ One-click PDF Download (Print → Save as PDF)
 - ✅ 500+ CVs Created counter
 - ✅ 50+ User Reviews/Testimonials
 - ✅ Professional Footer with copyright
 - ✅ Responsive Design (Mobile/Desktop)
 - ✅ PM2 Process Management
-- ✅ Secure Session Management
-- ✅ Password Hashing (bcryptjs)
+- ✅ AI Assistant via `/api/ai` (requires `OPENAI_API_KEY` on server host)
 
 ---
 
@@ -155,12 +154,13 @@ free-cv-builder/
 
 ## 🔐 Environment Variables for Deployment
 
-When deploying, make sure to set:
+When deploying server features (AI), make sure to set:
 
 ```
 NODE_ENV=production
 PORT=(auto-assigned by host)
-SESSION_SECRET=your-random-secret-here
+OPENAI_API_KEY=your-key-here   # optional, for AI only
+OPENAI_MODEL=gpt-4o-mini       # optional
 ```
 
 ---
