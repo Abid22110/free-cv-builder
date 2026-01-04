@@ -124,7 +124,9 @@ This project includes a nice login/signup UI powered by **Firebase Authenticatio
 	- Enable **Email/Password**
 4) Firebase Console → Authentication → Settings → Authorized domains:
 	- Add your domain (and `localhost` for local dev)
-5) Open [firebase-config.js](firebase-config.js) and replace the `REPLACE_ME` values
+5) Configure Firebase in ONE of these ways:
+	- Recommended (no code changes): open `/login.html` and paste your Firebase config in the “Enable Login” panel
+	- Or: open [firebase-config.js](firebase-config.js) and replace the `REPLACE_ME` values
 
 Then open `/login.html` or click “Sign in” in the header.
 

@@ -475,11 +475,11 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
     border: 1px solid rgba(15, 23, 42, 0.12);
     line-height: 1.45;
     white-space: pre-wrap;
+}
 
 .ai-bubble.is-pending {
     opacity: 0.7;
     font-style: italic;
-}
 }
 
 .ai-msg.user {
