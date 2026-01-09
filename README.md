@@ -61,7 +61,24 @@ A professional, modern CV/Resume builder web application with **100+ premium tem
 
 ---
 
-## 🚀 **Getting Started**
+## � **Recent Updates & Fixes**
+
+### **v2.1.1 - AI Backend Improvements**
+- ✅ **Fixed AI Integration**: Updated server.js to use proper OpenAI client library instead of raw fetch requests
+- ✅ **Enhanced Error Handling**: Better error messages and response formatting for AI requests
+- ✅ **Improved Dependencies**: Added OpenAI SDK to package.json for reliable AI functionality
+- ✅ **Security Updates**: Added .env to .gitignore to protect API keys
+- ✅ **Code Quality**: Cleaner, more maintainable backend code with proper async/await patterns
+
+### **Key Improvements:**
+- AI assistant now uses official OpenAI SDK for better reliability
+- Proper error handling prevents crashes when AI is not configured
+- Environment variables properly secured
+- All dependencies updated and verified
+
+---
+
+## �🚀 **Getting Started**
 
 1. **Open the app** - Works instantly in any browser
 2. **Fill your info** - Name, job title, experience, skills
