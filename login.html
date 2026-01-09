@@ -14,40 +14,195 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #ffffff;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
-            animation: fadeIn 0.6s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
         }
 
         .auth-container {
             background: white;
-            border-radius: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .auth-header {
+            margin-bottom: 32px;
+        }
+
+        .auth-header i {
+            font-size: 48px;
+            color: #2563eb;
+            margin-bottom: 16px;
+        }
+
+        .auth-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+
+        .auth-header p {
+            color: #6b7280;
+            font-size: 16px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 16px;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 12px 12px 12px 40px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .input-wrapper input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn-login {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-login:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-login:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .btn-google {
+            background: white;
+            color: #374151;
+            border: 1px solid #d1d5db;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-google:hover {
+            background: #f9fafb;
+            border-color: #9ca3af;
+        }
+
+        .divider {
+            position: relative;
+            text-align: center;
+            margin: 24px 0;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e5e7eb;
+        }
+
+        .divider span {
+            background: white;
+            padding: 0 16px;
+            color: #6b7280;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .error-message {
+            color: #dc2626;
+            font-size: 14px;
+            text-align: center;
+            min-height: 20px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .auth-footer {
+            margin-top: 24px;
+            text-align: center;
+        }
+
+        .auth-footer p {
+            margin: 8px 0;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .auth-footer a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             width: 100%;
             max-width: 450px;
@@ -345,57 +500,198 @@
 <body>
     <div class="auth-container">
         <div class="auth-header">
-            <i class="fas fa-user-circle"></i>
-            <h1>Welcome Back!</h1>
-            <p>Login to continue building your CV</p>
+            <i class="fas fa-file-alt"></i>
+            <h1>Welcome to CV Builder</h1>
+            <p>Sign in to save your CVs across devices</p>
         </div>
 
-        <div class="form-group">
-            <div class="login-method-tabs">
-                <button type="button" class="login-method-tab active" data-method="email">
-                    <i class="fas fa-envelope"></i> Email
-                </button>
-                <button type="button" class="login-method-tab" data-method="phone">
-                    <i class="fas fa-mobile-alt"></i> Phone
-                </button>
-            </div>
-        </div>
-
-        <div id="emailMethod" class="method-content active">
+        <form class="login-form">
             <div class="form-group">
-                <label for="email">Email Address</label>
+                <label for="email">Email</label>
                 <div class="input-wrapper">
                     <i class="fas fa-envelope"></i>
                     <input type="email" id="email" placeholder="your@email.com" required>
                 </div>
             </div>
-            <div class="error-message" id="errorMessage"></div>
-            <div class="form-group">
-                <button type="button" class="btn-login" id="sendEmailLinkBtn">
-                    <i class="fas fa-paper-plane"></i> Send Login Link
-                </button>
-            </div>
-            <p style="text-align: center; color: #64748b; font-size: 0.9rem; margin: 15px 0;">
-                We'll send a secure login link to your email. No password needed!
-            </p>
-        </div>
 
-        <div id="phoneMethod" class="method-content">
             <div class="form-group">
-                <label for="phone">Phone Number</label>
+                <label for="password">Password</label>
                 <div class="input-wrapper">
-                    <i class="fas fa-mobile-alt"></i>
-                    <input type="tel" id="phone" placeholder="+92 300 1234567" required>
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="password" placeholder="Your password" required>
                 </div>
             </div>
-            <div class="error-message" id="errorMessagePhone"></div>
+
+            <div class="error-message" id="errorMessage"></div>
+
+            <button type="submit" class="btn-login" id="loginBtn">
+                <i class="fas fa-sign-in-alt"></i> Sign In
+            </button>
+
+            <div class="divider">
+                <span>or</span>
+            </div>
+
+            <button type="button" class="btn-google" id="googleBtn">
+                <i class="fab fa-google"></i> Continue with Google
+            </button>
+
+            <div class="auth-footer">
+                <p>Don't have an account? <a href="#" id="signupLink">Sign up</a></p>
+                <p><a href="#" id="continueGuestLink">Continue as guest</a></p>
+            </div>
+        </form>
+    </div>
+                        <option value="+239">🇸🇹 +239 Sao Tome and Principe</option>
+                        <option value="+240">🇬🇶 +240 Equatorial Guinea</option>
+                        <option value="+241">🇬🇦 +241 Gabon</option>
+                        <option value="+242">🇨🇬 +242 Republic of the Congo</option>
+                        <option value="+243">🇨🇩 +243 DRC</option>
+                        <option value="+244">🇦🇴 +244 Angola</option>
+                        <option value="+245">🇬🇼 +245 Guinea-Bissau</option>
+                        <option value="+246">🇮🇴 +246 British Indian Ocean Territory</option>
+                        <option value="+247">🇦🇨 +247 Ascension Island</option>
+                        <option value="+248">🇸🇨 +248 Seychelles</option>
+                        <option value="+249">🇸🇩 +249 Sudan</option>
+                        <option value="+250">🇷🇼 +250 Rwanda</option>
+                        <option value="+251">🇪🇹 +251 Ethiopia</option>
+                        <option value="+252">🇸🇴 +252 Somalia</option>
+                        <option value="+253">🇩🇯 +253 Djibouti</option>
+                        <option value="+254">🇰🇪 +254 Kenya</option>
+                        <option value="+255">🇹🇿 +255 Tanzania</option>
+                        <option value="+256">🇺🇬 +256 Uganda</option>
+                        <option value="+257">🇧🇮 +257 Burundi</option>
+                        <option value="+258">🇲🇿 +258 Mozambique</option>
+                        <option value="+259">🇿🇲 +259 Zambia</option>
+                        <option value="+260">🇿🇲 +260 Zambia</option>
+                        <option value="+261">🇲🇬 +261 Madagascar</option>
+                        <option value="+262">🇷🇪 +262 Reunion</option>
+                        <option value="+263">🇿🇼 +263 Zimbabwe</option>
+                        <option value="+264">🇳🇦 +264 Namibia</option>
+                        <option value="+265">🇲🇼 +265 Malawi</option>
+                        <option value="+266">🇱🇸 +266 Lesotho</option>
+                        <option value="+267">🇧🇼 +267 Botswana</option>
+                        <option value="+268">🇸🇿 +268 Swaziland</option>
+                        <option value="+269">🇰🇲 +269 Comoros</option>
+                        <option value="+290">🇸🇭 +290 Saint Helena</option>
+                        <option value="+291">🇪🇷 +291 Eritrea</option>
+                        <option value="+297">🇦🇼 +297 Aruba</option>
+                        <option value="+298">🇫🇴 +298 Faroe Islands</option>
+                        <option value="+299">🇬🇱 +299 Greenland</option>
+                        <option value="+350">🇬🇮 +350 Gibraltar</option>
+                        <option value="+351">🇵🇹 +351 Portugal</option>
+                        <option value="+352">🇱🇺 +352 Luxembourg</option>
+                        <option value="+353">🇮🇪 +353 Ireland</option>
+                        <option value="+354">🇮🇸 +354 Iceland</option>
+                        <option value="+355">🇦🇱 +355 Albania</option>
+                        <option value="+356">🇲🇹 +356 Malta</option>
+                        <option value="+357">🇨🇾 +357 Cyprus</option>
+                        <option value="+358">🇫🇮 +358 Finland</option>
+                        <option value="+359">🇧🇬 +359 Bulgaria</option>
+                        <option value="+370">🇱🇹 +370 Lithuania</option>
+                        <option value="+371">🇱🇻 +371 Latvia</option>
+                        <option value="+372">🇪🇪 +372 Estonia</option>
+                        <option value="+373">🇲🇩 +373 Moldova</option>
+                        <option value="+374">🇦🇲 +374 Armenia</option>
+                        <option value="+375">🇧🇾 +375 Belarus</option>
+                        <option value="+376">🇦🇩 +376 Andorra</option>
+                        <option value="+377">🇲🇨 +377 Monaco</option>
+                        <option value="+378">🇸🇲 +378 San Marino</option>
+                        <option value="+380">🇺🇦 +380 Ukraine</option>
+                        <option value="+381">🇷🇸 +381 Serbia</option>
+                        <option value="+382">🇲🇪 +382 Montenegro</option>
+                        <option value="+383">🇽🇰 +383 Kosovo</option>
+                        <option value="+385">🇭🇷 +385 Croatia</option>
+                        <option value="+386">🇸🇮 +386 Slovenia</option>
+                        <option value="+387">🇧🇦 +387 Bosnia and Herzegovina</option>
+                        <option value="+389">🇲🇰 +389 Macedonia</option>
+                        <option value="+420">🇨🇿 +420 Czech Republic</option>
+                        <option value="+421">🇸🇰 +421 Slovakia</option>
+                        <option value="+423">🇱🇮 +423 Liechtenstein</option>
+                        <option value="+500">🇫🇰 +500 Falkland Islands</option>
+                        <option value="+501">🇧🇿 +501 Belize</option>
+                        <option value="+502">🇬🇹 +502 Guatemala</option>
+                        <option value="+503">🇸🇻 +503 El Salvador</option>
+                        <option value="+504">🇭🇳 +504 Honduras</option>
+                        <option value="+505">🇳🇮 +505 Nicaragua</option>
+                        <option value="+506">🇨🇷 +506 Costa Rica</option>
+                        <option value="+507">🇵🇦 +507 Panama</option>
+                        <option value="+508">🇵🇲 +508 Saint Pierre and Miquelon</option>
+                        <option value="+509">🇭🇹 +509 Haiti</option>
+                        <option value="+590">🇬🇵 +590 Guadeloupe</option>
+                        <option value="+591">🇧🇴 +591 Bolivia</option>
+                        <option value="+592">🇬🇾 +592 Guyana</option>
+                        <option value="+593">🇪🇨 +593 Ecuador</option>
+                        <option value="+594">🇬🇫 +594 French Guiana</option>
+                        <option value="+595">🇵🇾 +595 Paraguay</option>
+                        <option value="+596">🇲🇶 +596 Martinique</option>
+                        <option value="+597">🇸🇷 +597 Suriname</option>
+                        <option value="+598">🇺🇾 +598 Uruguay</option>
+                        <option value="+599">🇨🇼 +599 Curacao</option>
+                        <option value="+670">🇹🇱 +670 Timor-Leste</option>
+                        <option value="+672">🇦🇶 +672 Antarctica</option>
+                        <option value="+673">🇧🇳 +673 Brunei</option>
+                        <option value="+674">🇳🇷 +674 Nauru</option>
+                        <option value="+675">🇵🇬 +675 Papua New Guinea</option>
+                        <option value="+676">🇹🇴 +676 Tonga</option>
+                        <option value="+677">🇸🇧 +677 Solomon Islands</option>
+                        <option value="+678">🇻🇺 +678 Vanuatu</option>
+                        <option value="+679">🇫🇯 +679 Fiji</option>
+                        <option value="+680">🇵🇼 +680 Palau</option>
+                        <option value="+681">🇼🇫 +681 Wallis and Futuna</option>
+                        <option value="+682">🇨🇰 +682 Cook Islands</option>
+                        <option value="+683">🇳🇺 +683 Niue</option>
+                        <option value="+684">🇦🇸 +684 American Samoa</option>
+                        <option value="+685">🇼🇸 +685 Samoa</option>
+                        <option value="+686">🇰🇮 +686 Kiribati</option>
+                        <option value="+687">🇳🇨 +687 New Caledonia</option>
+                        <option value="+688">🇹🇻 +688 Tuvalu</option>
+                        <option value="+689">🇵🇫 +689 French Polynesia</option>
+                        <option value="+690">🇹🇰 +690 Tokelau</option>
+                        <option value="+691">🇫🇲 +691 Micronesia</option>
+                        <option value="+692">🇲🇭 +692 Marshall Islands</option>
+                        <option value="+850">🇰🇵 +850 North Korea</option>
+                        <option value="+852">🇭🇰 +852 Hong Kong</option>
+                        <option value="+853">🇲🇴 +853 Macau</option>
+                        <option value="+855">🇰🇭 +855 Cambodia</option>
+                        <option value="+856">🇱🇦 +856 Laos</option>
+                        <option value="+880">🇧🇩 +880 Bangladesh</option>
+                        <option value="+886">🇹🇼 +886 Taiwan</option>
+                        <option value="+960">🇲🇻 +960 Maldives</option>
+                        <option value="+961">🇱🇧 +961 Lebanon</option>
+                        <option value="+962">🇯🇴 +962 Jordan</option>
+                        <option value="+963">🇸🇾 +963 Syria</option>
+                        <option value="+964">🇮🇶 +964 Iraq</option>
+                        <option value="+965">🇰🇼 +965 Kuwait</option>
+                        <option value="+966">🇸🇦 +966 Saudi Arabia</option>
+                        <option value="+967">🇾🇪 +967 Yemen</option>
+                        <option value="+968">🇴🇲 +968 Oman</option>
+                        <option value="+970">🇵🇸 +970 Palestine</option>
+                        <option value="+971">🇦🇪 +971 UAE</option>
+                        <option value="+972">🇮🇱 +972 Israel</option>
+                        <option value="+973">🇧🇭 +973 Bahrain</option>
+                        <option value="+974">🇶🇦 +974 Qatar</option>
+                        <option value="+975">🇧🇹 +975 Bhutan</option>
+                        <option value="+976">🇲🇳 +976 Mongolia</option>
+                        <option value="+977">🇳🇵 +977 Nepal</option>
+                        <option value="+992">🇹🇯 +992 Tajikistan</option>
+                        <option value="+993">🇹🇲 +993 Turkmenistan</option>
+                        <option value="+994">🇦🇿 +994 Azerbaijan</option>
+                        <option value="+995">🇬🇪 +995 Georgia</option>
+                        <option value="+996">🇰🇬 +996 Kyrgyzstan</option>
+                        <option value="+998">🇺🇿 +998 Uzbekistan</option>
+                    </select>
+                    <input type="tel" id="phone" placeholder="300 1234567" required style="flex: 1;">
+                </div>
+            </div>
+            <div class="error-message" id="errorMessage"></div>
             <div class="form-group">
                 <button type="button" class="btn-login" id="sendPhoneCodeBtn">
-                    <i class="fas fa-paper-plane"></i> Send Code
+                    <i class="fas fa-paper-plane"></i> Send OTP Code
                 </button>
             </div>
             <div class="form-group" id="phoneCodeGroup" style="display: none;">
-                <label for="phoneCode">Enter 6-digit Code</label>
+                <label for="phoneCode">Enter 6-digit OTP Code</label>
                 <div class="input-wrapper">
                     <i class="fas fa-key"></i>
                     <input type="text" id="phoneCode" placeholder="123456" maxlength="6">
@@ -405,7 +701,7 @@
                 </button>
             </div>
             <p style="text-align: center; color: #64748b; font-size: 0.9rem; margin: 15px 0;">
-                We'll send a 6-digit code to your phone. Standard SMS rates apply.
+                We'll send a 6-digit OTP code to your phone. Standard SMS rates apply.
             </p>
         </div>
 
@@ -433,15 +729,6 @@
                 </a>
             </div>
         </div>
-
-        <div class="divider">
-            <span>OR</span>
-        </div>
-
-        <button type="button" class="btn-login" id="googleLoginBtn" style="background: #111827;">
-            <i class="fab fa-google"></i>
-            Continue with Google
-        </button>
 
         <div class="back-home">
             <a id="backHomeLink" href="index.html">
@@ -471,317 +758,132 @@
             }
         }
 
-        function friendlyAuthError(err) {
-            const code = String(err?.code || '');
-            if (code === 'auth/invalid-email') return 'Invalid email address.';
-            if (code === 'auth/user-not-found') return 'No account found for this email.';
-            if (code === 'auth/wrong-password') return 'Wrong password. Try again or reset it.';
-            if (code === 'auth/too-many-requests') return 'Too many attempts. Please wait and try again.';
-            if (code === 'auth/popup-closed-by-user') return 'Popup closed. Please try again.';
-            if (code === 'auth/popup-blocked') return 'Popup blocked by browser. Allow popups and try again.';
-            if (code === 'auth/invalid-phone-number') return 'Invalid phone number. Use format: +92 300 1234567';
-            if (code === 'auth/missing-phone-number') return 'Please enter your phone number.';
-            if (code === 'auth/code-expired') return 'Code expired. Please request a new one.';
-            if (code === 'auth/invalid-verification-code') return 'Invalid code. Please check and try again.';
-            if (code === 'auth/invalid-verification-id') return 'Verification failed. Please try again.';
-            return String(err?.message || 'Login failed. Please try again.');
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
         }
 
-        // Keep return URL when moving between auth pages.
-        try {
-            const next = getSafeNextUrl();
-            const toHome = document.getElementById('backHomeLink');
-            const toGuest = document.getElementById('continueGuestLink');
-            if (toHome) toHome.href = next || 'index.html';
-            if (toGuest) toGuest.href = next || 'index.html';
-        } catch {
-            // ignore
+        function hideError() {
+            document.getElementById('errorMessage').classList.remove('show');
         }
 
-        function isStaticHostingDemo() {
-            return (
-                window.location.hostname.endsWith('github.io') ||
-                window.location.protocol === 'file:'
-            );
+        // Check if Firebase is configured
+        function isFirebaseConfigured() {
+            const cfg = window.FIREBASE_CONFIG;
+            return cfg && cfg.apiKey && String(cfg.apiKey) !== 'REPLACE_ME';
         }
 
-        function ensureFirebaseConfigured() {
-            const errorMessage = document.getElementById('errorMessage');
-            const setupPanel = document.getElementById('firebaseSetupPanel');
-
-            let cfg = window.FIREBASE_CONFIG;
-            const hasCfg = cfg && cfg.apiKey && String(cfg.apiKey) !== 'REPLACE_ME';
-
-            if (!hasCfg) {
-                try {
-                    const raw = localStorage.getItem('free-cv-builder:firebase-config');
-                    const override = raw ? JSON.parse(raw) : null;
-                    if (override && override.apiKey && String(override.apiKey) !== 'REPLACE_ME') {
-                        cfg = override;
-                    }
-                } catch {
-                    // ignore
-                }
-            }
-
-            const ok = window.firebase && cfg && cfg.apiKey && String(cfg.apiKey) !== 'REPLACE_ME';
-            if (!ok) {
-                if (setupPanel) setupPanel.style.display = 'block';
-                errorMessage.textContent = 'Login is not configured yet. Paste Firebase config below (1-time).';
-                errorMessage.classList.add('show');
-                return false;
-            }
-
+        // Initialize Firebase if configured
+        if (isFirebaseConfigured()) {
             if (!firebase.apps || !firebase.apps.length) {
-                firebase.initializeApp(cfg);
+                firebase.initializeApp(window.FIREBASE_CONFIG);
             }
-            return true;
-        }
-
-        document.getElementById('saveFirebaseConfigBtn')?.addEventListener('click', () => {
-            const ta = document.getElementById('firebaseConfigTextarea');
-            const errorMessage = document.getElementById('errorMessage');
-            errorMessage.classList.remove('show');
-            errorMessage.style.color = '';
-            try {
-                const parsed = JSON.parse(String(ta?.value || '').trim());
-                if (!parsed || !parsed.apiKey || !parsed.authDomain) {
-                    throw new Error('Config must include apiKey and authDomain');
-                }
-                localStorage.setItem('free-cv-builder:firebase-config', JSON.stringify(parsed));
-                errorMessage.textContent = 'Saved! Reloading…';
-                errorMessage.style.color = '#10b981';
-                errorMessage.classList.add('show');
-                setTimeout(() => window.location.reload(), 350);
-            } catch (e) {
-                errorMessage.style.color = '#ef4444';
-                errorMessage.textContent = `Invalid JSON: ${String(e?.message || e)}`;
-                errorMessage.classList.add('show');
-            }
-        });
-
-        // Prefill textarea if config was already saved before.
-        try {
-            const raw = localStorage.getItem('free-cv-builder:firebase-config');
-            if (raw) {
-                const ta = document.getElementById('firebaseConfigTextarea');
-                if (ta && !String(ta.value || '').trim()) {
-                    ta.value = JSON.stringify(JSON.parse(raw), null, 2);
-                }
-            }
-        } catch {
-            // ignore
-        }
-
-        async function signInWithGoogle() {
-            const errorMessage = document.getElementById('errorMessage');
-            errorMessage.classList.remove('show');
-            errorMessage.style.color = '';
-
-            if (!ensureFirebaseConfigured()) return;
 
             const auth = firebase.auth();
-            const provider = new firebase.auth.GoogleAuthProvider();
 
-            try {
-                await auth.signInWithPopup(provider);
-                window.location.href = getSafeNextUrl();
-            } catch (err) {
-                // Popup can be blocked; fallback to redirect.
+            // Handle form submission (email/password login)
+            document.querySelector('.login-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                hideError();
+
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value.trim();
+                const loginBtn = document.getElementById('loginBtn');
+
+                if (!email || !password) {
+                    showError('Please enter both email and password');
+                    return;
+                }
+
+                loginBtn.disabled = true;
+                loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+
                 try {
-                    await auth.signInWithRedirect(provider);
-                } catch (err2) {
-                    if (isStaticHostingDemo()) {
-                        errorMessage.textContent = 'Google login needs a proper domain (localhost or deployed). Avoid opening via file:// and ensure Authorized domains is set in Firebase.';
-                    } else {
-                        errorMessage.textContent = friendlyAuthError(err2 || err);
+                    await auth.signInWithEmailAndPassword(email, password);
+                    window.location.href = getSafeNextUrl();
+                } catch (error) {
+                    let message = 'Login failed. Please try again.';
+                    if (error.code === 'auth/user-not-found') {
+                        message = 'No account found with this email. Try signing up first.';
+                    } else if (error.code === 'auth/wrong-password') {
+                        message = 'Incorrect password. Please try again.';
+                    } else if (error.code === 'auth/invalid-email') {
+                        message = 'Please enter a valid email address.';
                     }
-                    errorMessage.classList.add('show');
+                    showError(message);
+                } finally {
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
                 }
-            }
-        }
-
-        // Tab switching
-        document.querySelectorAll('.login-method-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.login-method-tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.method-content').forEach(c => c.classList.remove('active'));
-                tab.classList.add('active');
-                const method = tab.dataset.method;
-                document.getElementById(method + 'Method').classList.add('active');
-                // Clear errors
-                document.getElementById('errorMessage').classList.remove('show');
-                document.getElementById('errorMessagePhone').classList.remove('show');
             });
-        });
 
-        async function sendEmailLink() {
-            const email = String(document.getElementById('email')?.value || '').trim();
-            const errorMessage = document.getElementById('errorMessage');
-            const btn = document.getElementById('sendEmailLinkBtn');
+            // Handle Google sign-in
+            document.getElementById('googleBtn').addEventListener('click', async () => {
+                hideError();
 
-            errorMessage.classList.remove('show');
-            errorMessage.style.color = '';
-
-            if (!ensureFirebaseConfigured()) return;
-            if (!email) {
-                errorMessage.textContent = 'Please enter your email address.';
-                errorMessage.classList.add('show');
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-
-            try {
-                const auth = firebase.auth();
-                const actionCodeSettings = {
-                    url: window.location.origin + window.location.pathname + '?next=' + encodeURIComponent(getSafeNextUrl()),
-                    handleCodeInApp: true
-                };
-                await auth.sendSignInLinkToEmail(email, actionCodeSettings);
-                localStorage.setItem('emailForSignIn', email);
-                errorMessage.textContent = 'Login link sent! Check your email (including spam folder).';
-                errorMessage.style.color = '#10b981';
-                errorMessage.classList.add('show');
-            } catch (err) {
-                errorMessage.style.color = '#ef4444';
-                errorMessage.textContent = friendlyAuthError(err);
-                errorMessage.classList.add('show');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Login Link';
-            }
-        }
-
-        let phoneVerifier = null;
-        let phoneConfirmationResult = null;
-
-        async function sendPhoneCode() {
-            const phone = String(document.getElementById('phone')?.value || '').trim();
-            const errorMessage = document.getElementById('errorMessagePhone');
-            const btn = document.getElementById('sendPhoneCodeBtn');
-
-            errorMessage.classList.remove('show');
-            errorMessage.style.color = '';
-
-            if (!ensureFirebaseConfigured()) return;
-            if (!phone) {
-                errorMessage.textContent = 'Please enter your phone number.';
-                errorMessage.classList.add('show');
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-
-            try {
-                const auth = firebase.auth();
-                phoneVerifier = new firebase.auth.RecaptchaVerifier('sendPhoneCodeBtn', {
-                    size: 'invisible'
-                });
-                phoneConfirmationResult = await auth.signInWithPhoneNumber(phone, phoneVerifier);
-                document.getElementById('phoneCodeGroup').style.display = 'block';
-                errorMessage.textContent = 'Code sent! Enter the 6-digit code below.';
-                errorMessage.style.color = '#10b981';
-                errorMessage.classList.add('show');
-            } catch (err) {
-                errorMessage.style.color = '#ef4444';
-                errorMessage.textContent = friendlyAuthError(err);
-                errorMessage.classList.add('show');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Code';
-            }
-        }
-
-        async function verifyPhoneCode() {
-            const code = String(document.getElementById('phoneCode')?.value || '').trim();
-            const errorMessage = document.getElementById('errorMessagePhone');
-            const btn = document.getElementById('verifyPhoneCodeBtn');
-
-            errorMessage.classList.remove('show');
-            errorMessage.style.color = '';
-
-            if (!phoneConfirmationResult) {
-                errorMessage.textContent = 'Please request a code first.';
-                errorMessage.classList.add('show');
-                return;
-            }
-            if (!code || code.length !== 6) {
-                errorMessage.textContent = 'Please enter the 6-digit code.';
-                errorMessage.classList.add('show');
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
-
-            try {
-                await phoneConfirmationResult.confirm(code);
-                window.location.href = getSafeNextUrl();
-            } catch (err) {
-                errorMessage.style.color = '#ef4444';
-                errorMessage.textContent = friendlyAuthError(err);
-                errorMessage.classList.add('show');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-check"></i> Verify & Login';
-            }
-        }
-
-        // Handle email link sign-in on page load
-        try {
-            if (ensureFirebaseConfigured() && firebase.auth().isSignInWithEmailLink(window.location.href)) {
-                let email = localStorage.getItem('emailForSignIn');
-                if (!email) {
-                    email = window.prompt('Please provide your email for confirmation');
+                try {
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    await auth.signInWithPopup(provider);
+                    window.location.href = getSafeNextUrl();
+                } catch (error) {
+                    if (error.code !== 'auth/popup-closed-by-user') {
+                        showError('Google sign-in failed. Please try again.');
+                    }
                 }
-                if (email) {
-                    firebase.auth().signInWithEmailLink(email, window.location.href)
-                        .then(() => {
-                            localStorage.removeItem('emailForSignIn');
-                            window.location.href = getSafeNextUrl();
-                        })
-                        .catch((err) => {
-                            const errorMessage = document.getElementById('errorMessage');
-                            errorMessage.style.color = '#ef4444';
-                            errorMessage.textContent = friendlyAuthError(err);
-                            errorMessage.classList.add('show');
-                        });
+            });
+
+            // Handle sign up link (create account)
+            document.getElementById('signupLink').addEventListener('click', async (e) => {
+                e.preventDefault();
+                hideError();
+
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value.trim();
+
+                if (!email || !password) {
+                    showError('Please enter email and password to create account');
+                    return;
                 }
-            }
-        } catch {
-            // ignore
+
+                if (password.length < 6) {
+                    showError('Password must be at least 6 characters');
+                    return;
+                }
+
+                try {
+                    await auth.createUserWithEmailAndPassword(email, password);
+                    window.location.href = getSafeNextUrl();
+                } catch (error) {
+                    let message = 'Account creation failed. Please try again.';
+                    if (error.code === 'auth/email-already-in-use') {
+                        message = 'An account with this email already exists. Try signing in instead.';
+                    } else if (error.code === 'auth/weak-password') {
+                        message = 'Password is too weak. Please choose a stronger password.';
+                    }
+                    showError(message);
+                }
+            });
+
+            // Auto-redirect if already signed in
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    window.location.href = getSafeNextUrl();
+                }
+            });
+
+        } else {
+            // Firebase not configured - show setup message
+            showError('Login is not configured yet. Please contact the administrator.');
+            document.getElementById('loginBtn').disabled = true;
+            document.getElementById('googleBtn').disabled = true;
         }
 
-        document.getElementById('sendEmailLinkBtn')?.addEventListener('click', () => {
-            sendEmailLink();
+        // Continue as guest
+        document.getElementById('continueGuestLink').addEventListener('click', () => {
+            window.location.href = getSafeNextUrl();
         });
-
-        document.getElementById('sendPhoneCodeBtn')?.addEventListener('click', () => {
-            sendPhoneCode();
-        });
-
-        document.getElementById('verifyPhoneCodeBtn')?.addEventListener('click', () => {
-            verifyPhoneCode();
-        });
-
-        // Keep Google login as backup
-        document.getElementById('googleLoginBtn')?.addEventListener('click', () => {
-            signInWithGoogle();
-        });
-
-        // If already signed in, go back automatically.
-        try {
-            if (ensureFirebaseConfigured()) {
-                firebase.auth().onAuthStateChanged((user) => {
-                    if (user) window.location.href = getSafeNextUrl();
-                });
-            }
-        } catch {
-            // ignore
-        }
     </script>
 </body>
 </html>
+

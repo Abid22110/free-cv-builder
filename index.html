@@ -14,16 +14,15 @@
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <h1><i class="fas fa-file-alt"></i> Free CV Builder</h1>
-                    <p>Fill in the blanks, pick a template, and download in minutes</p>
+                    <p>Fill in the blanks, get AI help, pick a template, and download in minutes</p>
                 </div>
                 <div style="display: flex; align-items: center; gap: 12px; opacity: 0.95; font-weight: 600; flex-wrap: wrap; justify-content: flex-end;">
-                    <span id="authStatusText">Free • Optional Login</span>
-                    <a id="authSignInLink" class="btn-outline" href="login.html" style="text-decoration: none;">
-                        <i class="fas fa-user"></i> Sign in
-                    </a>
-                    <button id="authSignOutBtn" type="button" class="btn-outline" style="display:none;">
-                        <i class="fas fa-right-from-bracket"></i> Sign out
-                    </button>
+                    <span id="authStatusText" style="color: #10b981;">
+                        <i class="fas fa-robot"></i> AI Helper Ready
+                    </span>
+                    <span style="font-size: 0.9rem; color: #64748b;">
+                        Start filling your CV below →
+                    </span>
                 </div>
             </div>
         </header>
@@ -176,37 +175,37 @@
                     </button>
                 </div>
 
-                <div class="form-card ai-card" id="aiAssistantCard">
+                <div class="form-card ai-card" id="aiAssistantCard" style="display: none;">
                     <h2><i class="fas fa-robot"></i> AI Assistant</h2>
                     <p class="ai-subtitle">Chat to generate ATS-friendly content (summary, skills, bullets).</p>
 
                     <div class="ai-quick-actions" aria-label="Quick actions">
-                        <button type="button" class="btn-outline ai-action" id="aiGenerateSummaryBtn">
+                        <button type="button" class="btn-outline ai-action" id="aiGenerateSummaryBtnOld">
                             <i class="fas fa-wand-magic-sparkles"></i> Summary
                         </button>
-                        <button type="button" class="btn-outline ai-action" id="aiSuggestSkillsBtn">
+                        <button type="button" class="btn-outline ai-action" id="aiSuggestSkillsBtnOld">
                             <i class="fas fa-lightbulb"></i> Skills
                         </button>
-                        <button type="button" class="btn-outline ai-action" id="aiImproveExperienceBtn">
+                        <button type="button" class="btn-outline ai-action" id="aiImproveExperienceBtnOld">
                             <i class="fas fa-pen"></i> Bullets
                         </button>
-                        <button type="button" class="btn-outline ai-action" id="aiClearChatBtn">
+                        <button type="button" class="btn-outline ai-action" id="aiClearChatBtnOld">
                             <i class="fas fa-trash"></i> Clear
                         </button>
                     </div>
 
                     <div class="ai-chat" role="region" aria-label="AI chat">
-                        <div class="ai-messages" id="aiMessages" aria-live="polite"></div>
+                        <div class="ai-messages" id="aiMessagesOld" aria-live="polite"></div>
                         <div class="ai-composer">
-                            <label class="sr-only" for="aiPrompt">Message</label>
-                            <textarea id="aiPrompt" rows="2" placeholder="Ask: write my summary, improve bullets, suggest skills..." ></textarea>
-                            <button type="button" class="btn-secondary" id="aiRunCustomBtn">
+                            <label class="sr-only" for="aiPromptOld">Message</label>
+                            <textarea id="aiPromptOld" rows="2" placeholder="Ask: write my summary, improve bullets, suggest skills..." ></textarea>
+                            <button type="button" class="btn-secondary" id="aiRunCustomBtnOld">
                                 <i class="fas fa-paper-plane"></i> Send
                             </button>
                         </div>
                         <div class="ai-footer">
-                            <div class="ai-hint" id="aiHint">Tip: Fill Experience/Skills first for best results.</div>
-                            <button type="button" class="btn-outline" id="aiCopyBtn" disabled>
+                            <div class="ai-hint" id="aiHintOld">Tip: Fill Experience/Skills first for best results.</div>
+                            <button type="button" class="btn-outline" id="aiCopyBtnOld" disabled>
                                 <i class="fas fa-copy"></i> Copy last answer
                             </button>
                         </div>
@@ -396,5 +395,49 @@
     <script src="config.js"></script>
 
     <script src="app.js?v=20260104-8"></script>
+
+    <!-- Floating AI Helper -->
+    <div class="ai-helper" id="aiHelper">
+        <div class="ai-helper-header">
+            <i class="fas fa-robot"></i>
+            <span>AI Helper</span>
+            <button class="ai-helper-toggle" id="aiHelperToggle">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        </div>
+        <div class="ai-helper-content">
+            <div class="ai-quick-actions" aria-label="Quick actions">
+                <button type="button" class="btn-outline ai-action" id="aiGenerateSummaryBtn">
+                    <i class="fas fa-wand-magic-sparkles"></i> Summary
+                </button>
+                <button type="button" class="btn-outline ai-action" id="aiSuggestSkillsBtn">
+                    <i class="fas fa-lightbulb"></i> Skills
+                </button>
+                <button type="button" class="btn-outline ai-action" id="aiImproveExperienceBtn">
+                    <i class="fas fa-pen"></i> Bullets
+                </button>
+                <button type="button" class="btn-outline ai-action" id="aiClearChatBtn">
+                    <i class="fas fa-trash"></i> Clear
+                </button>
+            </div>
+
+            <div class="ai-chat" role="region" aria-label="AI chat">
+                <div class="ai-messages" id="aiMessages" aria-live="polite"></div>
+                <div class="ai-composer">
+                    <label class="sr-only" for="aiPrompt">Message</label>
+                    <textarea id="aiPrompt" rows="2" placeholder="Ask: write my summary, improve bullets, suggest skills..." ></textarea>
+                    <button type="button" class="btn-secondary" id="aiRunCustomBtn">
+                        <i class="fas fa-paper-plane"></i> Send
+                    </button>
+                </div>
+                <div class="ai-footer">
+                    <div class="ai-hint" id="aiHint">💡 Fill in your experience and skills above for personalized AI suggestions!</div>
+                    <button type="button" class="btn-outline" id="aiCopyBtn" disabled>
+                        <i class="fas fa-copy"></i> Copy last answer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

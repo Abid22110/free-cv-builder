@@ -1,8 +1,8 @@
 # 🎓 Free CV Builder v2.1
 
-A professional, modern CV/Resume builder web application with **100+ premium templates**, no login required, and deployment ready!
+A professional, modern CV/Resume builder web application with **100+ premium templates**, AI assistant, and zero setup required!
 
-**GitHub**: https://github.com/Abid22110/free-cv-builder  
+**GitHub**: https://github.com/Abid22110/free-cv-builder
 **Live Demo**: Coming Soon (Deploy instructions below)
 
 ---
@@ -15,17 +15,25 @@ A professional, modern CV/Resume builder web application with **100+ premium tem
 - Real-time template switching
 - Smooth animations and transitions
 
-### ✅ **No Login Required (Optional Premium Login)**
-- Works instantly in the browser without any login
-- **Optional Login**: Use email link, phone SMS, or Google for premium features (save drafts across devices)
-- If you login, your CV drafts sync automatically - no manual saving needed!
+### ✅ **Zero Setup Required**
+- Works instantly in the browser - no login, no configuration needed
+- AI Helper available immediately for generating content
+- Everything works offline and saves locally
+- Just open and start building!
+
+### 🤖 **AI Assistant (Always Available)**
+- Generates ATS-friendly summaries
+- Suggests relevant skills
+- Improves experience bullet points
+- Floating helper visible on every page
+- No API keys or backend needed for basic use
 
 ### 📝 **Complete CV Builder**
 - **Personal Information**: Name, job title, email, phone, location, website
-- **Professional Summary**: 4-line text area for overview
-- **Work Experience**: Multiple entries with descriptions
+- **Professional Summary**: AI-generated or custom text
+- **Work Experience**: Multiple entries with AI-improved descriptions
 - **Education**: Multiple degrees/certifications
-- **Skills**: Tag-based skill management
+- **Skills**: AI-suggested tag-based skill management
 - **Languages**: Multiple languages with proficiency levels
 
 ### 📊 **Social Proof Features**
@@ -50,6 +58,18 @@ A professional, modern CV/Resume builder web application with **100+ premium tem
 - Works on all devices (Mobile, Tablet, Desktop)
 - Touch-friendly buttons
 - Adaptive layouts
+
+---
+
+## 🚀 **Getting Started**
+
+1. **Open the app** - Works instantly in any browser
+2. **Fill your info** - Name, job title, experience, skills
+3. **Use AI Helper** - Click buttons for instant content generation
+4. **Pick template** - Choose from 100+ professional designs
+5. **Download PDF** - One-click professional CV export
+
+**That's it!** No setup, no login, no configuration required.
 - Beautiful animations
 
 ### 🚀 **Modern Tech Stack**
@@ -126,14 +146,14 @@ GitHub Pages is static, so it cannot run `/api/ai`. You have two options:
 		 - `AI_API_BASE_URL` to your backend URL (example: `https://your-app.onrender.com`)
 
 ### Optional Login (Firebase Auth)
-This project includes a simple login system powered by **Firebase Authentication** (Email Link + Phone SMS + Google).
+This project includes a simple login system powered by **Firebase Authentication** (Phone SMS verification).
 
 For the simplest setup, follow: [FIREBASE_SETUP.md](FIREBASE_SETUP.md)
 
 **Login Methods Available:**
-- **Email Link**: Enter email, get secure login link (no password needed)
-- **Phone SMS**: Enter phone number, get 6-digit code via SMS
-- **Google**: One-click sign-in with Google account
+- **Email/Password**: Create account or sign in with email and password
+- **Google Sign-in**: One-click login with your Google account
+- **Continue as Guest**: Skip login and use locally (always available)
 
 **Benefits of Login:**
 - Save CV drafts across devices (syncs to cloud)
@@ -145,9 +165,7 @@ Note: To make login actually useful across devices, the app can also sync drafts
 1) Create a Firebase project: https://console.firebase.google.com/
 2) Add a **Web App** and copy the config values
 3) Firebase Console → Authentication → Sign-in method:
-	- Enable **Email/Password** (for email links)
 	- Enable **Phone** (for SMS codes)
-	- Enable **Google**
 4) Firebase Console → Authentication → Settings → Authorized domains:
 	- Add your domain (and `localhost` for local dev)
 5) Configure Firebase in ONE of these ways:

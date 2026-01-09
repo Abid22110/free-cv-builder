@@ -739,6 +739,19 @@ function setupAuthUi() {
 
     if (!statusEl || !signInLink || !signOutBtn) return;
 
+    // Auto-enable demo mode for simplicity
+    const isDemoMode = true; // Always demo mode for simplicity
+    localStorage.setItem('free-cv-builder:demo-mode', 'true');
+
+    if (isDemoMode) {
+        statusEl.textContent = 'Ready to Build • AI Helper Available';
+        signInLink.style.display = 'none';
+        signOutBtn.style.display = 'none';
+        // Set demo user ID for draft storage
+        switchDraftOwner('demo-user');
+        return;
+    }
+
     try {
         const next = `${window.location.pathname}${window.location.search}${window.location.hash}`;
         signInLink.href = `login.html?next=${encodeURIComponent(next)}`;
@@ -916,8 +929,27 @@ function setupWizard() {
 }
 
 function setupAiAssistant() {
-    const card = document.getElementById('aiAssistantCard');
-    if (!card) return;
+    const helper = document.getElementById('aiHelper');
+    const toggleBtn = document.getElementById('aiHelperToggle');
+    const content = document.querySelector('.ai-helper-content');
+    if (!helper || !toggleBtn || !content) return;
+
+    // Toggle functionality for floating AI helper
+    let isExpanded = true; // Start expanded by default for new users
+    const helper = document.getElementById('aiHelper');
+    if (helper) {
+        helper.classList.remove('collapsed'); // Ensure it's expanded
+    }
+    const toggleHelper = () => {
+        isExpanded = !isExpanded;
+        helper.classList.toggle('collapsed', !isExpanded);
+        const icon = toggleBtn.querySelector('i');
+        if (icon) {
+            icon.className = isExpanded ? 'fas fa-chevron-left' : 'fas fa-chevron-right';
+        }
+    };
+
+    toggleBtn.addEventListener('click', toggleHelper);
 
     const btnSummary = document.getElementById('aiGenerateSummaryBtn');
     const btnSkills = document.getElementById('aiSuggestSkillsBtn');
@@ -969,7 +1001,7 @@ function setupAiAssistant() {
             empty.className = 'ai-msg assistant';
             const bubble = document.createElement('div');
             bubble.className = 'ai-bubble';
-            bubble.textContent = 'Hi! Use the buttons above, or ask me to write a summary, improve bullets, or suggest skills.';
+            bubble.textContent = '👋 Welcome! I\'m your AI CV assistant. Click the buttons above to generate content, or ask me anything about your resume!';
             empty.appendChild(bubble);
             messagesEl.appendChild(empty);
         } else {
@@ -1025,7 +1057,7 @@ function setupAiAssistant() {
         }
 
         if (!aiDisabled) {
-            card.classList.toggle('is-busy', !!busy);
+            helper.classList.toggle('is-busy', !!busy);
         }
     };
 

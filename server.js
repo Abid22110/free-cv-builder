@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const OpenAI = require('openai');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -133,6 +134,7 @@ app.post('/api/ai', async (req, res) => {
             return res.status(400).json({ error: 'Missing prompt' });
         }
 
+        const openai = new OpenAI({ apiKey });
         const model = String(process.env.OPENAI_MODEL || 'gpt-4o-mini');
 
         const system =
@@ -146,33 +148,27 @@ app.post('/api/ai', async (req, res) => {
             'If asked for skills, return a comma-separated list. ' +
             'If asked to rewrite bullets, return bullet points using hyphen.';
 
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-                model,
-                messages: [
-                    { role: 'system', content: system },
-                    safeContext ? { role: 'user', content: `Context:\n${safeContext}` } : null,
-                    { role: 'user', content: safePrompt }
-                ].filter(Boolean),
-                temperature: 0.6
-            })
-        });
+        const messages = [
+            { role: 'system', content: system }
+        ];
 
-        const data = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-            const msg = data?.error?.message || `OpenAI request failed (${response.status})`;
-            return res.status(502).json({ error: msg });
+        if (safeContext) {
+            messages.push({ role: 'user', content: `Context:\n${safeContext}` });
         }
 
-        const text = data?.choices?.[0]?.message?.content;
+        messages.push({ role: 'user', content: safePrompt });
+
+        const completion = await openai.chat.completions.create({
+            model,
+            messages,
+            temperature: 0.6,
+            max_tokens: 1000
+        });
+
+        const text = completion.choices[0]?.message?.content;
         return res.json({ text: String(text || '').trim() });
     } catch (err) {
+        console.error('AI Error:', err);
         return res.status(500).json({ error: 'AI request failed' });
     }
 });
