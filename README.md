@@ -111,10 +111,61 @@ A professional, modern CV/Resume builder web application with **100+ premium tem
 
 ---
 
-## 🚀 Quick Start
+### 🚀 **Quick Start (Updated for v2.1.1)**
 
-### Prerequisites
-- **Node.js** (v18 or higher) - Download from https://nodejs.org
+#### **Step 1: Install Node.js**
+```bash
+# Download from: https://nodejs.org (LTS version recommended)
+# After installation, restart your terminal/command prompt
+```
+
+#### **Step 2: Install Dependencies**
+```bash
+cd free-cv-builder
+npm install
+```
+
+#### **Step 3: Set Up AI (Required for AI features)**
+1. **Get OpenAI API Key** (Free $5 credit available):
+   - Visit: https://platform.openai.com/api-keys
+   - Sign up for an account
+   - Create a new API key
+   - Copy the key (starts with `sk-`)
+
+2. **Configure the API Key**:
+   - Open `.env` file in the project root
+   - Replace `your_openai_api_key_here` with your actual API key:
+   ```env
+   OPENAI_API_KEY=sk-your-actual-key-here
+   ```
+
+#### **Step 4: Start the Server**
+```bash
+# Easy setup (recommended):
+.\setup.ps1    # PowerShell
+# or
+setup.bat      # Command Prompt
+
+# Manual setup:
+npm start
+# Or for Windows: .\start.ps1
+```
+
+**Access**: http://localhost:3001
+
+#### **Step 5: Test AI Features**
+- Open the app in your browser
+- Fill in some basic info (Name, Job Title, Email)
+- Click the floating AI helper button
+- Try "Generate Summary" or "Suggest Skills"
+- AI should now work! 🤖
+
+### ⚠️ **AI Not Working?**
+If AI buttons are disabled or show errors:
+1. **Check API Key**: Make sure `OPENAI_API_KEY` in `.env` is set correctly
+2. **Restart Server**: Stop (Ctrl+C) and restart with `npm start`
+3. **Check Console**: Open browser DevTools (F12) → Console for error messages
+4. **Verify Key**: API keys start with `sk-` and are ~50 characters long
 
 ### Installation
 
