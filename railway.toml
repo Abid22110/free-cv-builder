@@ -1,0 +1,14 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+startCommand = "npm start"
+
+[build.env]
+NODE_VERSION = "18"
+
+[env]
+NODE_ENV = "production"
