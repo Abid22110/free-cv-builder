@@ -15,12 +15,10 @@ A professional, modern CV/Resume builder web application with **100+ premium tem
 - Real-time template switching
 - Smooth animations and transitions
 
-### ✅ **No Login Required**
-- Works instantly in the browser
-- No accounts or passwords
-- Your CV data stays on your device unless you choose to share it
-
-> Login is now **optional** (Google + Email/Password) if you want a more “premium” experience.
+### ✅ **No Login Required (Optional Premium Login)**
+- Works instantly in the browser without any login
+- **Optional Login**: Use email link, phone SMS, or Google for premium features (save drafts across devices)
+- If you login, your CV drafts sync automatically - no manual saving needed!
 
 ### 📝 **Complete CV Builder**
 - **Personal Information**: Name, job title, email, phone, location, website
@@ -78,8 +76,21 @@ A professional, modern CV/Resume builder web application with **100+ premium tem
 
 ## 🚀 Quick Start
 
+### Prerequisites
+- **Node.js** (v18 or higher) - Download from https://nodejs.org
+
 ### Installation
 
+#### **Windows (PowerShell)**
+```powershell
+# Navigate to directory
+cd free-cv-builder
+
+# Install dependencies and start (automatic check)
+.\start.ps1
+```
+
+#### **Linux/Mac (Bash)**
 ```bash
 # Navigate to directory
 cd free-cv-builder
@@ -115,17 +126,28 @@ GitHub Pages is static, so it cannot run `/api/ai`. You have two options:
 		 - `AI_API_BASE_URL` to your backend URL (example: `https://your-app.onrender.com`)
 
 ### Optional Login (Firebase Auth)
-This project includes a nice login/signup UI powered by **Firebase Authentication** (Google + Email/Password).
+This project includes a simple login system powered by **Firebase Authentication** (Email Link + Phone SMS + Google).
 
 For the simplest setup, follow: [FIREBASE_SETUP.md](FIREBASE_SETUP.md)
+
+**Login Methods Available:**
+- **Email Link**: Enter email, get secure login link (no password needed)
+- **Phone SMS**: Enter phone number, get 6-digit code via SMS
+- **Google**: One-click sign-in with Google account
+
+**Benefits of Login:**
+- Save CV drafts across devices (syncs to cloud)
+- Access your saved drafts from any device
+- Premium experience with data persistence
 
 Note: To make login actually useful across devices, the app can also sync drafts using **Firestore** (optional but recommended).
 
 1) Create a Firebase project: https://console.firebase.google.com/
 2) Add a **Web App** and copy the config values
 3) Firebase Console → Authentication → Sign-in method:
+	- Enable **Email/Password** (for email links)
+	- Enable **Phone** (for SMS codes)
 	- Enable **Google**
-	- Enable **Email/Password**
 4) Firebase Console → Authentication → Settings → Authorized domains:
 	- Add your domain (and `localhost` for local dev)
 5) Configure Firebase in ONE of these ways:
@@ -133,7 +155,7 @@ Note: To make login actually useful across devices, the app can also sync drafts
 	- Or: open [firebase-config.js](firebase-config.js) and replace the `REPLACE_ME` values
 
 Then open `/login.html` or click “Sign in” in the header.
-
+**Note**: Login is completely optional. The CV builder works perfectly without it!
 ### New Step-by-Step Flow
 The builder now uses a 3-step wizard:
 1) Fill in the blanks → 2) Pick a template → 3) Download
@@ -146,9 +168,12 @@ You can still use the live preview panel on the right at all times.
 - Step 2: Open “Browse 100 Styles” and select a template
 - Step 3: Preview → Download PDF (Print → Save as PDF)
 
-On Windows, use `npm start` (the `start.sh` script is for bash/Linux).
+**Windows users**: Run `.\start.ps1` in PowerShell for automatic setup with helpful checks.
 
-If you see `node` / `npm` “not recognized” on Windows, install Node.js (LTS) and reopen PowerShell so PATH updates apply.
+If you see `node` / `npm` "not recognized":
+1. Install Node.js from https://nodejs.org (LTS version)
+2. Restart PowerShell/Terminal after installation
+3. Run `.\start.ps1` again
 
 ---
 

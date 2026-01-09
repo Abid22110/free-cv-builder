@@ -3,9 +3,71 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+function safeJsonParse(value) {
+    try {
+        return JSON.parse(value);
+    } catch {
+        return null;
+    }
+}
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Basic security + caching headers (keep minimal; static HTML should not be aggressively cached)
+app.use((req, res, next) => {
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+        res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+        next();
+});
+
+// Health check (useful for Render/Railway)
+app.get('/health', (req, res) => {
+        res.status(200).json({ ok: true });
+});
+
+// Runtime config (set via hosting environment variables; avoids editing files per deploy)
+// - AI_API_BASE_URL (optional)
+// - FIREBASE_CONFIG_JSON (optional) OR FIREBASE_API_KEY/FIREBASE_AUTH_DOMAIN/FIREBASE_PROJECT_ID/FIREBASE_APP_ID
+app.get('/config.js', (req, res) => {
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-store, max-age=0');
+
+        const aiBaseUrl = String(process.env.AI_API_BASE_URL || '').trim();
+
+        const firebaseFromJson = safeJsonParse(process.env.FIREBASE_CONFIG_JSON);
+        const firebaseFromParts = {
+                apiKey: String(process.env.FIREBASE_API_KEY || '').trim(),
+                authDomain: String(process.env.FIREBASE_AUTH_DOMAIN || '').trim(),
+                projectId: String(process.env.FIREBASE_PROJECT_ID || '').trim(),
+                appId: String(process.env.FIREBASE_APP_ID || '').trim()
+        };
+
+        const firebaseCandidate = (firebaseFromJson && typeof firebaseFromJson === 'object')
+                ? firebaseFromJson
+                : firebaseFromParts;
+
+        const hasFirebase = !!(firebaseCandidate?.apiKey && firebaseCandidate?.authDomain && firebaseCandidate?.projectId);
+        const hasAi = !!aiBaseUrl;
+
+        const js = `;(function(){
+    try {
+        var hasAi = ${hasAi ? 'true' : 'false'};
+        var hasFirebase = ${hasFirebase ? 'true' : 'false'};
+
+        if (hasAi) {
+            window.APP_CONFIG = Object.assign({}, window.APP_CONFIG || {}, { AI_API_BASE_URL: ${JSON.stringify(aiBaseUrl)} });
+        }
+
+        if (hasFirebase) {
+            window.FIREBASE_CONFIG = Object.assign({}, window.FIREBASE_CONFIG || {}, ${JSON.stringify(firebaseCandidate)});
+        }
+    } catch (e) {}
+})();\n`;
+
+        res.status(200).send(js);
+});
 
 // CORS for AI endpoint (so a static frontend like GitHub Pages can call this backend)
 // Configure allowed origins via CORS_ORIGIN (comma-separated) or '*' for any.
@@ -41,6 +103,15 @@ app.use('/app.js', express.static(path.join(__dirname, 'app.js')));
 app.use(express.static(__dirname, { 
     index: false // Don't serve index.html automatically
 }));
+
+// Friendly auth routes (for production URLs)
+app.get('/login', (req, res) => {
+    res.redirect(302, '/login.html');
+});
+
+app.get('/signup', (req, res) => {
+    res.redirect(302, '/signup.html');
+});
 
 // --- AI Assistant API (server-side proxy to keep keys private) ---
 // Requires: OPENAI_API_KEY in environment

@@ -33,7 +33,8 @@ Copy ONLY the object `{ ... }` and keep it ready.
 3. Go to **Sign-in method**
 4. Enable:
    - **Google**
-   - **Email/Password**
+   - **Email/Password** (for email links)
+   - **Phone** (for SMS codes)
 
 ## 4) Add Authorized domain (important)
 1. Firebase Console → **Authentication → Settings**

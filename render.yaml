@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: free-cv-builder
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 18
+      # Optional (set in Render dashboard if you prefer)
+      # - key: OPENAI_API_KEY
+      #   sync: false
+      # - key: OPENAI_MODEL
+      #   value: gpt-4o-mini
+      # - key: CORS_ORIGIN
+      #   value: "*"
+      # For login + AI base URL from server-side config.js
+      # - key: AI_API_BASE_URL
+      #   value: ""
+      # - key: FIREBASE_CONFIG_JSON
+      #   sync: false
