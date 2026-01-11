@@ -386,39 +386,17 @@
             </button>
         </form>
 
-        <div class="setup-panel" id="firebaseSetupPanel">
-            <h3>Enable Signup (1-time Setup)</h3>
+        <div class="setup-panel" id="localInfoPanel">
+            <h3>How Local Accounts Work</h3>
             <p>
-                Paste your Firebase <b>Web App config</b> here. It will be saved in your browser (localStorage).
-                This is safe to use on GitHub Pages.
+                Accounts live only in this browser. Clearing site data removes them, so export your CV after major edits.
             </p>
-            <textarea id="firebaseConfigTextarea" placeholder='{
-  "apiKey": "...",
-  "authDomain": "...",
-  "projectId": "...",
-  "appId": "..."
-}'></textarea>
-            <div class="setup-actions">
-                <button type="button" class="btn-signup" id="saveFirebaseConfigBtn">
-                    <i class="fas fa-save"></i> Save Config
-                </button>
-                <a class="btn-signup" href="https://console.firebase.google.com/" target="_blank" rel="noreferrer" style="text-decoration:none;">
-                    <i class="fas fa-arrow-up-right-from-square"></i> Open Firebase Console
-                </a>
+            <div class="setup-actions" style="gap: 10px;">
                 <a class="btn-signup" id="continueGuestLink" href="index.html" style="text-decoration:none; background: linear-gradient(135deg, #64748b, #94a3b8);">
                     <i class="fas fa-user"></i> Continue as Guest
                 </a>
             </div>
         </div>
-
-        <div class="divider">
-            <span>OR</span>
-        </div>
-
-        <button type="button" class="btn-signup" id="googleSignupBtn" style="background: #111827;">
-            <i class="fab fa-google"></i>
-            Continue with Google
-        </button>
 
         <div class="login-link">
             Already have an account? <a id="goLoginLink" href="login.html">Login</a>
@@ -431,255 +409,161 @@
         </div>
     </div>
 
-    <!-- Firebase Auth (required for signup) -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="firebase-config.js?v=20260104-7"></script>
-    <script src="app-config.js?v=20260104-7"></script>
-    <script src="config.js"></script>
+    <script src="local-auth.js?v=20260111-1"></script>
 
     <script>
-        function getSafeNextUrl() {
+        (function initLocalSignup() {
+            const form = document.getElementById('signupForm');
+            const nameInput = document.getElementById('name');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            const strengthBar = document.getElementById('strengthBar');
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            const submitBtn = form?.querySelector('button[type="submit"]');
+
+            const getSafeNextUrl = () => {
+                try {
+                    const params = new URLSearchParams(window.location.search);
+                    const next = String(params.get('next') || '').trim();
+                    if (!next) return 'index.html';
+                    if (/^javascript:/i.test(next)) return 'index.html';
+                    if (next.includes('://') || next.startsWith('//')) return 'index.html';
+                    return next;
+                } catch {
+                    return 'index.html';
+                }
+            };
+
+            const friendlyLocalAuthError = (err) => {
+                const code = String(err?.code || '').toLowerCase();
+                if (code === 'invalid-email') return 'Enter a valid email address.';
+                if (code === 'email-exists') return 'This email is already registered here. Try logging in instead.';
+                if (code === 'weak-password') return 'Password must be at least 6 characters long.';
+                if (code === 'storage-write-failed') return 'Unable to save to browser storage. Check permissions and try again.';
+                return String(err?.message || 'Signup failed. Please try again.');
+            };
+
+            const nextUrl = getSafeNextUrl();
+
+            try {
+                const toLogin = document.getElementById('goLoginLink');
+                const toHome = document.getElementById('backHomeLink');
+                const toGuest = document.getElementById('continueGuestLink');
+                if (toLogin) toLogin.href = `login.html?next=${encodeURIComponent(nextUrl)}`;
+                if (toHome) toHome.href = nextUrl || 'index.html';
+                if (toGuest) toGuest.href = nextUrl || 'index.html';
+            } catch {
+                // ignore link rewrite issues
+            }
+
+            if (passwordInput && strengthBar) {
+                passwordInput.addEventListener('input', () => {
+                    const password = passwordInput.value;
+                    let strength = 0;
+
+                    if (password.length >= 6) strength++;
+                    if (password.length >= 8) strength++;
+                    if (/[A-Z]/.test(password)) strength++;
+                    if (/[0-9]/.test(password)) strength++;
+                    if (/[^A-Za-z0-9]/.test(password)) strength++;
+
+                    strengthBar.className = 'password-strength-bar';
+                    if (strength <= 2) {
+                        strengthBar.classList.add('weak');
+                    } else if (strength <= 4) {
+                        strengthBar.classList.add('medium');
+                    } else {
+                        strengthBar.classList.add('strong');
+                    }
+                });
+            }
+
+            const setSubmitting = (isSubmitting) => {
+                if (!submitBtn) return;
+                submitBtn.disabled = isSubmitting;
+                submitBtn.innerHTML = isSubmitting
+                    ? '<i class="fas fa-spinner fa-spin"></i> Creating Account...'
+                    : '<i class="fas fa-user-plus"></i> Create Account';
+            };
+
+            const LocalAuthRef = window.LocalAuth;
+            if (!LocalAuthRef) {
+                errorMessage.textContent = 'Local signup is unavailable right now. Refresh and try again.';
+                errorMessage.classList.add('show');
+                if (submitBtn) submitBtn.disabled = true;
+                return;
+            }
+
             try {
                 const params = new URLSearchParams(window.location.search);
-                const next = String(params.get('next') || '').trim();
-                if (!next) return 'index.html';
-                if (/^javascript:/i.test(next)) return 'index.html';
-                if (next.includes('://') || next.startsWith('//')) return 'index.html';
-                return next;
+                const emailParam = String(params.get('email') || '').trim();
+                if (emailParam && emailInput && !emailInput.value) {
+                    emailInput.value = emailParam;
+                }
             } catch {
-                return 'index.html';
+                // ignore prefill failures
             }
-        }
-
-        function friendlyAuthError(err) {
-            const code = String(err?.code || '');
-            if (code === 'auth/invalid-email') return 'Invalid email address.';
-            if (code === 'auth/email-already-in-use') return 'This email is already registered. Try login instead.';
-            if (code === 'auth/weak-password') return 'Password is too weak. Use at least 6 characters.';
-            if (code === 'auth/too-many-requests') return 'Too many attempts. Please wait and try again.';
-            if (code === 'auth/popup-closed-by-user') return 'Popup closed. Please try again.';
-            if (code === 'auth/popup-blocked') return 'Popup blocked by browser. Allow popups and try again.';
-            return String(err?.message || 'Signup failed. Please try again.');
-        }
-
-        // Keep return URL when moving between auth pages.
-        try {
-            const next = getSafeNextUrl();
-            const toLogin = document.getElementById('goLoginLink');
-            const toHome = document.getElementById('backHomeLink');
-            const toGuest = document.getElementById('continueGuestLink');
-            if (toLogin) toLogin.href = `login.html?next=${encodeURIComponent(next)}`;
-            if (toHome) toHome.href = next || 'index.html';
-            if (toGuest) toGuest.href = next || 'index.html';
-        } catch {
-            // ignore
-        }
-
-        function isStaticHostingDemo() {
-            return (
-                window.location.hostname.endsWith('github.io') ||
-                window.location.protocol === 'file:'
-            );
-        }
-
-        function ensureFirebaseConfigured() {
-            const errorMessage = document.getElementById('errorMessage');
-            const setupPanel = document.getElementById('firebaseSetupPanel');
-
-            let cfg = window.FIREBASE_CONFIG;
-            const hasCfg = cfg && cfg.apiKey && String(cfg.apiKey) !== 'REPLACE_ME';
-
-            if (!hasCfg) {
-                try {
-                    const raw = localStorage.getItem('free-cv-builder:firebase-config');
-                    const override = raw ? JSON.parse(raw) : null;
-                    if (override && override.apiKey && String(override.apiKey) !== 'REPLACE_ME') {
-                        cfg = override;
-                    }
-                } catch {
-                    // ignore
-                }
-            }
-
-            const ok = window.firebase && cfg && cfg.apiKey && String(cfg.apiKey) !== 'REPLACE_ME';
-            if (!ok) {
-                if (setupPanel) setupPanel.style.display = 'block';
-                errorMessage.textContent = 'Signup is not configured yet. Paste Firebase config below (1-time).';
-                errorMessage.classList.add('show');
-                return false;
-            }
-
-            if (!firebase.apps || !firebase.apps.length) {
-                firebase.initializeApp(cfg);
-            }
-            return true;
-        }
-
-        document.getElementById('saveFirebaseConfigBtn')?.addEventListener('click', () => {
-            const ta = document.getElementById('firebaseConfigTextarea');
-            const errorMessage = document.getElementById('errorMessage');
-            errorMessage.classList.remove('show');
-            errorMessage.style.color = '';
-            try {
-                const parsed = JSON.parse(String(ta?.value || '').trim());
-                if (!parsed || !parsed.apiKey || !parsed.authDomain) {
-                    throw new Error('Config must include apiKey and authDomain');
-                }
-                localStorage.setItem('free-cv-builder:firebase-config', JSON.stringify(parsed));
-                errorMessage.textContent = 'Saved! Reloading…';
-                errorMessage.style.color = '#10b981';
-                errorMessage.classList.add('show');
-                setTimeout(() => window.location.reload(), 350);
-            } catch (e) {
-                errorMessage.style.color = '#ef4444';
-                errorMessage.textContent = `Invalid JSON: ${String(e?.message || e)}`;
-                errorMessage.classList.add('show');
-            }
-        });
-
-        // Prefill textarea if config was already saved before.
-        try {
-            const raw = localStorage.getItem('free-cv-builder:firebase-config');
-            if (raw) {
-                const ta = document.getElementById('firebaseConfigTextarea');
-                if (ta && !String(ta.value || '').trim()) {
-                    ta.value = JSON.stringify(JSON.parse(raw), null, 2);
-                }
-            }
-        } catch {
-            // ignore
-        }
-
-        async function signUpWithGoogle() {
-            const errorMessage = document.getElementById('errorMessage');
-            const successMessage = document.getElementById('successMessage');
-            errorMessage.classList.remove('show');
-            successMessage.classList.remove('show');
-            errorMessage.style.color = '';
-
-            if (!ensureFirebaseConfigured()) return;
-
-            const auth = firebase.auth();
-            const provider = new firebase.auth.GoogleAuthProvider();
 
             try {
-                await auth.signInWithPopup(provider);
-                window.location.href = getSafeNextUrl();
-            } catch (err) {
-                try {
-                    await auth.signInWithRedirect(provider);
-                } catch (err2) {
-                    if (isStaticHostingDemo()) {
-                        errorMessage.textContent = 'Google signup needs a proper domain (localhost or deployed). Avoid opening via file:// and ensure Authorized domains is set in Firebase.';
-                    } else {
-                        errorMessage.textContent = friendlyAuthError(err2 || err);
-                    }
+                const current = LocalAuthRef.getCurrentUser();
+                if (current) {
+                    window.location.href = nextUrl;
+                    return;
+                }
+            } catch {
+                // ignore lookup issues
+            }
+
+            LocalAuthRef.onChange((user) => {
+                if (user) {
+                    window.location.href = nextUrl;
+                }
+            });
+
+            if (!form) return;
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                const name = String(nameInput?.value || '').trim();
+                const email = String(emailInput?.value || '').trim();
+                const password = String(passwordInput?.value || '');
+                const confirmPassword = String(confirmPasswordInput?.value || '');
+
+                errorMessage.classList.remove('show');
+                successMessage.classList.remove('show');
+                errorMessage.style.color = '';
+
+                if (password !== confirmPassword) {
+                    errorMessage.textContent = 'Passwords do not match.';
                     errorMessage.classList.add('show');
-                }
-            }
-        }
-
-        document.getElementById('googleSignupBtn')?.addEventListener('click', () => {
-            signUpWithGoogle();
-        });
-
-        const passwordInput = document.getElementById('password');
-        const strengthBar = document.getElementById('strengthBar');
-
-        passwordInput.addEventListener('input', () => {
-            const password = passwordInput.value;
-            let strength = 0;
-
-            if (password.length >= 6) strength++;
-            if (password.length >= 8) strength++;
-            if (/[A-Z]/.test(password)) strength++;
-            if (/[0-9]/.test(password)) strength++;
-            if (/[^A-Za-z0-9]/.test(password)) strength++;
-
-            strengthBar.className = 'password-strength-bar';
-            if (strength <= 2) {
-                strengthBar.classList.add('weak');
-            } else if (strength <= 4) {
-                strengthBar.classList.add('medium');
-            } else {
-                strengthBar.classList.add('strong');
-            }
-        });
-
-        document.getElementById('signupForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const name = document.getElementById('name').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            const errorMessage = document.getElementById('errorMessage');
-            const successMessage = document.getElementById('successMessage');
-            const submitBtn = e.target.querySelector('button[type="submit"]');
-
-            errorMessage.classList.remove('show');
-            successMessage.classList.remove('show');
-            errorMessage.style.color = '';
-
-            if (password !== confirmPassword) {
-                errorMessage.textContent = 'Passwords do not match!';
-                errorMessage.classList.add('show');
-                return;
-            }
-
-            if (password.length < 6) {
-                errorMessage.textContent = 'Password must be at least 6 characters long!';
-                errorMessage.classList.add('show');
-                return;
-            }
-
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
-
-            try {
-                if (!ensureFirebaseConfigured()) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
                     return;
                 }
 
-                const cred = await firebase.auth().createUserWithEmailAndPassword(email, password);
-                if (cred?.user && name) {
-                    try {
-                        await cred.user.updateProfile({ displayName: name });
-                    } catch {
-                        // ignore
-                    }
+                if (password.length < 6) {
+                    errorMessage.textContent = 'Password must be at least 6 characters long.';
+                    errorMessage.classList.add('show');
+                    return;
                 }
 
-                successMessage.textContent = 'Account created! Redirecting...';
-                successMessage.classList.add('show');
-                setTimeout(() => {
-                    window.location.href = getSafeNextUrl();
-                }, 500);
-            } catch (error) {
-                if (isStaticHostingDemo()) {
-                    errorMessage.textContent = 'Signup needs a proper domain (localhost or deployed). Avoid opening via file:// and ensure Authorized domains is set in Firebase.';
-                } else {
-                    errorMessage.textContent = friendlyAuthError(error);
-                }
-                errorMessage.classList.add('show');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
-            }
-        });
+                setSubmitting(true);
 
-        // If already signed in, go back automatically.
-        try {
-            if (ensureFirebaseConfigured()) {
-                firebase.auth().onAuthStateChanged((user) => {
-                    if (user) window.location.href = getSafeNextUrl();
-                });
-            }
-        } catch {
-            // ignore
-        }
+                try {
+                    const user = await LocalAuthRef.register({ name, email, password });
+                    successMessage.textContent = `Welcome, ${user?.displayName || 'there'}! Redirecting...`;
+                    successMessage.classList.add('show');
+                    setTimeout(() => {
+                        window.location.href = nextUrl;
+                    }, 400);
+                } catch (error) {
+                    errorMessage.textContent = friendlyLocalAuthError(error);
+                    errorMessage.classList.add('show');
+                    setSubmitting(false);
+                }
+            });
+        })();
     </script>
 </body>
 </html>

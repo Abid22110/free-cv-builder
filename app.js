@@ -3,9 +3,13 @@ let experienceCount = 0;
 let educationCount = 0;
 let courseCount = 0;
 let languageCount = 0;
+let projectCount = 0;
+let awardCount = 0;
 let currentStyle = 'style1'; // Default style
 let profilePhotoDataUrl = '';
 let skillsList = [];
+let lastPreviewSnapshot = { markup: '', className: '' };
+let previewScale = 1;
 
 const CV_DRAFT_STORAGE_PREFIX = 'free-cv-builder:draft:v2.1';
 let currentAuthUid = null;
@@ -245,6 +249,22 @@ function collectCvDraft() {
         description: String(course.querySelector('.course-description')?.value || '').trim()
     })).filter(c => c.title || c.org || c.description);
 
+    const projects = Array.from(document.querySelectorAll('.project-item')).map((proj) => ({
+        title: String(proj.querySelector('.project-title')?.value || '').trim(),
+        role: String(proj.querySelector('.project-role')?.value || '').trim(),
+        link: String(proj.querySelector('.project-link')?.value || '').trim(),
+        start: String(proj.querySelector('.project-start')?.value || '').trim(),
+        end: String(proj.querySelector('.project-end')?.value || '').trim(),
+        description: String(proj.querySelector('.project-description')?.value || '').trim()
+    })).filter(p => p.title || p.role || p.description || p.link);
+
+    const awards = Array.from(document.querySelectorAll('.award-item')).map((award) => ({
+        title: String(award.querySelector('.award-title')?.value || '').trim(),
+        issuer: String(award.querySelector('.award-issuer')?.value || '').trim(),
+        year: String(award.querySelector('.award-year')?.value || '').trim(),
+        description: String(award.querySelector('.award-description')?.value || '').trim()
+    })).filter(a => a.title || a.issuer || a.description);
+
     const languages = Array.from(document.querySelectorAll('.language-item')).map((lang) => ({
         name: String(lang.querySelector('.lang-name')?.value || '').trim(),
         level: String(lang.querySelector('.lang-level')?.value || '').trim()
@@ -292,6 +312,8 @@ function collectCvDraft() {
         experiences,
         education,
         courses,
+        projects,
+        awards,
         languages
     };
 }
@@ -355,20 +377,28 @@ function loadCvDraft({ storageKey } = {}) {
     const expContainer = document.getElementById('experienceContainer');
     const eduContainer = document.getElementById('educationContainer');
     const courseContainer = document.getElementById('courseContainer');
+    const projectContainer = document.getElementById('projectContainer');
+    const awardContainer = document.getElementById('awardContainer');
     const langContainer = document.getElementById('languageContainer');
     if (expContainer) expContainer.innerHTML = '';
     if (eduContainer) eduContainer.innerHTML = '';
     if (courseContainer) courseContainer.innerHTML = '';
+    if (projectContainer) projectContainer.innerHTML = '';
+    if (awardContainer) awardContainer.innerHTML = '';
     if (langContainer) langContainer.innerHTML = '';
 
     experienceCount = 0;
     educationCount = 0;
     courseCount = 0;
+    projectCount = 0;
+    awardCount = 0;
     languageCount = 0;
 
     const experiences = Array.isArray(draft.experiences) ? draft.experiences : [];
     const education = Array.isArray(draft.education) ? draft.education : [];
     const courses = Array.isArray(draft.courses) ? draft.courses : [];
+    const projects = Array.isArray(draft.projects) ? draft.projects : [];
+    const awards = Array.isArray(draft.awards) ? draft.awards : [];
     const languages = Array.isArray(draft.languages) ? draft.languages : [];
 
     if (experiences.length === 0) {
@@ -431,6 +461,46 @@ function loadCvDraft({ storageKey } = {}) {
         }
     }
 
+    if (projects.length === 0) {
+        addProject();
+    } else {
+        for (const p of projects) {
+            addProject();
+            const last = projectContainer?.lastElementChild;
+            if (!last) continue;
+            const title = last.querySelector('.project-title');
+            const role = last.querySelector('.project-role');
+            const link = last.querySelector('.project-link');
+            const s = last.querySelector('.project-start');
+            const en = last.querySelector('.project-end');
+            const d = last.querySelector('.project-description');
+            if (title) title.value = p.title || '';
+            if (role) role.value = p.role || '';
+            if (link) link.value = p.link || '';
+            if (s) s.value = p.start || '';
+            if (en) en.value = p.end || '';
+            if (d) d.value = p.description || '';
+        }
+    }
+
+    if (awards.length === 0) {
+        addAward();
+    } else {
+        for (const a of awards) {
+            addAward();
+            const last = awardContainer?.lastElementChild;
+            if (!last) continue;
+            const title = last.querySelector('.award-title');
+            const issuer = last.querySelector('.award-issuer');
+            const year = last.querySelector('.award-year');
+            const d = last.querySelector('.award-description');
+            if (title) title.value = a.title || '';
+            if (issuer) issuer.value = a.issuer || '';
+            if (year) year.value = a.year || '';
+            if (d) d.value = a.description || '';
+        }
+    }
+
     if (languages.length === 0) {
         addLanguage();
     } else {
@@ -462,12 +532,14 @@ function loadCvDraft({ storageKey } = {}) {
     }
 
     // Auto-preview if required fields exist.
+    lastPreviewSnapshot = { markup: '', className: '' };
+
     const fullName = String(fields.fullName || '').trim();
     const jobTitle = String(fields.jobTitle || '').trim();
     const email = String(fields.email || '').trim();
     if (fullName && jobTitle && email) {
         try {
-            generateCV();
+            generateCV({ skipValidation: true });
         } catch {
             // ignore
         }
@@ -587,21 +659,33 @@ function updateCvThemeBadge() {
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
-    applyStoredAppConfig();
-    initializeStyleGrid();
-    addExperience();
-    addEducation();
-    addCourse();
-    addLanguage();
-    setupProfilePhotoUpload();
-    setupSkillsChips();
-    setupAiAssistant();
-    setupWizard();
-    setupAuthUi();
-    setupQuickSetup();
+    const safeRun = (label, fn) => {
+        try {
+            fn();
+        } catch (err) {
+            console.warn(`Init step failed: ${label}`, err);
+        }
+    };
+
+    safeRun('applyStoredAppConfig', applyStoredAppConfig);
+    safeRun('initializeStyleGrid', initializeStyleGrid);
+    safeRun('addExperience', addExperience);
+    safeRun('addEducation', addEducation);
+    safeRun('addCourse', addCourse);
+    safeRun('addProject', addProject);
+    safeRun('addAward', addAward);
+    safeRun('addLanguage', addLanguage);
+    safeRun('setupProfilePhotoUpload', setupProfilePhotoUpload);
+    safeRun('setupSkillsChips', setupSkillsChips);
+    safeRun('setupFormValidation', setupFormValidation);
+    safeRun('setupAiAssistant', setupAiAssistant);
+    safeRun('setupWizard', setupWizard);
+    safeRun('setupPreviewZoom', setupPreviewZoom);
+    safeRun('setupAuthUi', setupAuthUi);
+    safeRun('setupQuickSetup', setupQuickSetup);
 
     // Restore a saved draft if present.
-    loadCvDraft();
+    safeRun('loadCvDraft', loadCvDraft);
 
     // Auto-save on any input changes.
     const formSection = document.querySelector('.form-section');
@@ -610,11 +694,25 @@ window.addEventListener('DOMContentLoaded', async () => {
         formSection.addEventListener('change', () => scheduleSaveDraft());
         formSection.addEventListener('click', (e) => {
             const el = e.target;
-            if (el && (el.closest('.add-btn') || el.closest('.remove-btn'))) {
+            if (!el) return;
+            const hasClosest = typeof el.closest === 'function'
+                ? el.closest('.add-btn') || el.closest('.remove-btn')
+                : el.classList && (el.classList.contains('add-btn') || el.classList.contains('remove-btn'));
+            if (hasClosest) {
                 scheduleSaveDraft();
             }
         });
     }
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+            saveCvDraft();
+        }
+    });
+
+    window.addEventListener('beforeunload', () => {
+        saveCvDraft();
+    });
 });
 
 function setupQuickSetup() {
@@ -655,21 +753,33 @@ function setupQuickSetup() {
         const fbOk = isConfiguredFirebase(getFirebaseConfig());
         const aiUrl = getAiBaseUrl();
         const aiOk = !isStaticHost || !!aiUrl;
+        const loginMode = window.LocalAuth ? 'local' : (fbOk ? 'firebase' : 'none');
 
-        // Show setup card if something relevant is missing.
-        const shouldShow = !fbOk || (isStaticHost && !aiUrl);
+        // Show setup card primarily when AI backend needs configuration.
+        const shouldShow = isStaticHost && !aiUrl;
         card.style.display = shouldShow ? '' : 'none';
 
         if (subtitle) {
             const parts = [];
-            parts.push(fbOk ? 'Login: ready' : 'Login: needs Firebase config');
+            if (loginMode === 'local') {
+                parts.push('Login: browser account (saved locally)');
+            } else if (loginMode === 'firebase') {
+                parts.push('Login: Firebase ready');
+            } else {
+                parts.push('Login: needs setup');
+            }
             parts.push(isStaticHost ? (aiOk ? 'AI: ready (backend URL set)' : 'AI: needs backend URL') : 'AI: server mode');
             subtitle.textContent = parts.join(' • ');
         }
 
         if (aiUrlInput) aiUrlInput.value = aiUrl;
 
-        if (firebaseNote) {
+        if (window.LocalAuth) {
+            const firebaseGroup = firebaseTa?.closest('.form-group');
+            if (firebaseGroup) firebaseGroup.style.display = 'none';
+            if (saveFirebaseBtn) saveFirebaseBtn.style.display = 'none';
+            if (firebaseNote) firebaseNote.style.display = 'none';
+        } else if (firebaseNote) {
             firebaseNote.style.display = fbOk ? 'none' : '';
             if (!fbOk) {
                 firebaseNote.textContent = 'Tip: Firebase Console → Project settings → Your apps → Web app config.';
@@ -739,91 +849,45 @@ function setupAuthUi() {
 
     if (!statusEl || !signInLink || !signOutBtn) return;
 
-    // Auto-enable demo mode for simplicity
-    const isDemoMode = true; // Always demo mode for simplicity
-    localStorage.setItem('free-cv-builder:demo-mode', 'true');
+    const localAuth = window.LocalAuth;
 
-    if (isDemoMode) {
-        statusEl.textContent = 'Ready to Build • AI Helper Available';
-        signInLink.style.display = 'none';
-        signOutBtn.style.display = 'none';
-        // Set demo user ID for draft storage
-        switchDraftOwner('demo-user');
-        return;
-    }
-
-    try {
-        const next = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-        signInLink.href = `login.html?next=${encodeURIComponent(next)}`;
-    } catch {
-        // ignore
-    }
-
-    const getFirebaseConfig = () => {
-        const fromFile = typeof window !== 'undefined' ? window.FIREBASE_CONFIG : null;
-        const isConfigured = (cfg) => !!(cfg?.apiKey && String(cfg.apiKey) !== 'REPLACE_ME');
-
-        if (isConfigured(fromFile)) return fromFile;
-
-        try {
-            const raw = localStorage.getItem('free-cv-builder:firebase-config');
-            const override = raw ? safeJsonParse(raw) : null;
-            if (isConfigured(override)) return override;
-        } catch {
-            // ignore
-        }
-        return fromFile;
-    };
-
-    const config = getFirebaseConfig();
-    const firebaseAvailable = typeof window !== 'undefined' && window.firebase;
-    const configured = !!(config?.apiKey && String(config.apiKey) !== 'REPLACE_ME');
-
-    if (!firebaseAvailable || !configured) {
-        statusEl.textContent = 'Free • Guest mode (Login not configured)';
+    const applyGuestState = () => {
+        statusEl.textContent = 'Guest mode • Sign in to keep drafts per user';
         signInLink.style.display = '';
         signOutBtn.style.display = 'none';
+        try {
+            const next = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+            signInLink.href = `login.html?next=${encodeURIComponent(next)}`;
+        } catch {
+            signInLink.href = 'login.html';
+        }
+        switchDraftOwner(null);
+    };
+
+    if (!localAuth) {
+        applyGuestState();
         return;
     }
 
-    try {
-        if (!firebase.apps || !firebase.apps.length) {
-            firebase.initializeApp(config);
-        }
-
-        const auth = firebase.auth();
-
-        const setSignedOut = () => {
-            statusEl.textContent = 'Free • Optional Login';
-            signInLink.style.display = '';
-            signOutBtn.style.display = 'none';
-        };
-
-        const setSignedIn = (user) => {
-            const label = user?.displayName || user?.email || 'Account';
+    const render = () => {
+        const user = localAuth.getCurrentUser();
+        if (user) {
+            const label = user.displayName || user.email || 'Account';
             statusEl.textContent = `Signed in: ${label}`;
             signInLink.style.display = 'none';
             signOutBtn.style.display = '';
-        };
+            switchDraftOwner(user.id);
+        } else {
+            applyGuestState();
+        }
+    };
 
-        signOutBtn.addEventListener('click', async () => {
-            try {
-                await auth.signOut();
-            } catch {
-                // ignore
-            }
-        });
+    signOutBtn.addEventListener('click', () => {
+        localAuth.signOut();
+    });
 
-        auth.onAuthStateChanged((user) => {
-            if (user) setSignedIn(user);
-            else setSignedOut();
-            switchDraftOwner(user?.uid);
-        });
-    } catch {
-        statusEl.textContent = 'Free • Optional Login';
-        signInLink.style.display = '';
-        signOutBtn.style.display = 'none';
-    }
+    render();
+    localAuth.onChange(render);
 }
 
 function setupWizard() {
@@ -866,35 +930,30 @@ function setupWizard() {
         }
 
         // Keep the view near the top of the form section when changing steps.
-        header.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (header && typeof header.scrollIntoView === 'function') {
+            header.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     };
 
-    const canGenerate = () => {
-        const fullName = String(document.getElementById('fullName')?.value || '').trim();
-        const jobTitle = String(document.getElementById('jobTitle')?.value || '').trim();
-        const email = String(document.getElementById('email')?.value || '').trim();
-        return !!(fullName && jobTitle && email);
-    };
-
-    const refreshPreview = () => {
-        if (!canGenerate()) {
-            alert('Please fill required fields: Full Name, Job Title, and Email');
+    const ensureValidAndGenerate = ({ focusInvalid = false } = {}) => {
+        const result = validatePrimaryFields({ showErrors: true, focusFirst: focusInvalid, updateSummaryBox: true });
+        if (!result.valid) {
             return false;
         }
-        generateCV();
+        generateCV({ skipValidation: true });
         return true;
     };
 
     if (btnNext1) {
         btnNext1.addEventListener('click', () => {
-            if (!refreshPreview()) return;
+            if (!ensureValidAndGenerate({ focusInvalid: true })) return;
             setStep(2);
         });
     }
 
     if (btnPreview) {
         btnPreview.addEventListener('click', () => {
-            refreshPreview();
+            ensureValidAndGenerate({ focusInvalid: true });
         });
     }
 
@@ -903,7 +962,7 @@ function setupWizard() {
     if (btnNext2) {
         btnNext2.addEventListener('click', () => {
             // Ensure preview exists before download step.
-            if (!refreshPreview()) return;
+            if (!ensureValidAndGenerate({ focusInvalid: true })) return;
             setStep(3);
         });
     }
@@ -915,17 +974,36 @@ function setupWizard() {
             const sn = Number(s.getAttribute('data-step'));
             if (sn === 1) return setStep(1);
             if (sn === 2) {
-                if (!refreshPreview()) return;
+                if (!ensureValidAndGenerate({ focusInvalid: true })) return;
                 return setStep(2);
             }
             if (sn === 3) {
-                if (!refreshPreview()) return;
+                if (!ensureValidAndGenerate({ focusInvalid: true })) return;
                 return setStep(3);
             }
         });
     }
 
     setStep(1);
+}
+
+function setupPreviewZoom() {
+    const range = document.getElementById('previewZoomRange');
+    const label = document.getElementById('previewZoomLabel');
+    const canvas = document.getElementById('previewCanvas');
+    if (!range || !label || !canvas) return;
+
+    const clampScale = (value) => Math.min(1.3, Math.max(0.8, value));
+
+    const applyScale = (value) => {
+        const scale = clampScale(Number(value) / 100 || 1);
+        previewScale = scale;
+        canvas.style.setProperty('--preview-scale', String(scale));
+        label.textContent = `${Math.round(scale * 100)}%`;
+    };
+
+    range.addEventListener('input', () => applyScale(range.value));
+    applyScale(range.value || 100);
 }
 
 function setupAiAssistant() {
@@ -936,10 +1014,7 @@ function setupAiAssistant() {
 
     // Toggle functionality for floating AI helper
     let isExpanded = true; // Start expanded by default for new users
-    const helper = document.getElementById('aiHelper');
-    if (helper) {
-        helper.classList.remove('collapsed'); // Ensure it's expanded
-    }
+    helper.classList.remove('collapsed'); // Ensure it's expanded
     const toggleHelper = () => {
         isExpanded = !isExpanded;
         helper.classList.toggle('collapsed', !isExpanded);
@@ -963,6 +1038,7 @@ function setupAiAssistant() {
 
     const messages = [];
     let aiDisabled = false;
+    let aiDemoMode = false;
 
     const getAiEndpoint = () => {
         const base = String(window.APP_CONFIG?.AI_API_BASE_URL || '').trim();
@@ -1046,6 +1122,11 @@ function setupAiAssistant() {
     const setBusy = (busy) => {
         const buttons = [btnSummary, btnSkills, btnImprove, btnRun, btnCopy, btnClear].filter(Boolean);
         for (const b of buttons) {
+            if (aiDemoMode) {
+                b.disabled = (b === btnCopy && !String(getLastAssistant() || '').trim());
+                continue;
+            }
+
             if (aiDisabled) {
                 // On static hosting, disable AI actions to avoid confusing failures.
                 const allow = b === btnClear;
@@ -1056,20 +1137,21 @@ function setupAiAssistant() {
             b.disabled = !!busy || (b === btnCopy && !String(getLastAssistant() || '').trim());
         }
 
-        if (!aiDisabled) {
+        if (!aiDisabled && !aiDemoMode) {
             helper.classList.toggle('is-busy', !!busy);
         }
     };
 
     const isStaticHost = window.location.hostname.endsWith('github.io') || window.location.protocol === 'file:';
-    aiDisabled = isStaticHost && getAiEndpoint() === '/api/ai';
-    if (aiDisabled) {
+    aiDemoMode = isStaticHost && getAiEndpoint() === '/api/ai';
+    aiDisabled = false;
+    if (aiDemoMode) {
         if (hintEl) {
-            hintEl.textContent = 'AI needs a backend. Deploy server (Render/Railway/Glitch) and set AI_API_BASE_URL in app-config.js.';
+            hintEl.textContent = 'Demo mode: basic suggestions are generated locally. Deploy the server for real AI.';
         }
         if (promptEl) {
-            promptEl.disabled = true;
-            promptEl.placeholder = 'Deploy the Node server to enable AI chat…';
+            promptEl.disabled = false;
+            promptEl.placeholder = 'Demo mode: ask for summary, skills, or bullets…';
         }
         setBusy(false);
     }
@@ -1105,7 +1187,7 @@ function setupAiAssistant() {
         }
     };
 
-    const getAiContext = () => {
+    const collectAiContext = () => {
         const fullName = String(document.getElementById('fullName')?.value || '').trim();
         const jobTitle = String(document.getElementById('jobTitle')?.value || '').trim();
         const summary = String(document.getElementById('summary')?.value || '').trim();
@@ -1134,7 +1216,7 @@ function setupAiAssistant() {
 
         const recentChat = messages.slice(-6).map(m => ({ role: m.role, content: m.content }));
 
-        const payload = {
+        return {
             fullName,
             jobTitle,
             summary,
@@ -1144,9 +1226,100 @@ function setupAiAssistant() {
             languages,
             recentChat
         };
+    };
 
+    const getAiContext = () => {
+        const payload = collectAiContext();
         // Keep context reasonably small.
         return JSON.stringify(payload).slice(0, 6000);
+    };
+
+    const buildDemoResponse = (kind, prompt) => {
+        const data = collectAiContext();
+        const skillsArray = Array.isArray(skillsList) ? skillsList.slice() : [];
+        const normalizedJob = String(data.jobTitle || '').toLowerCase();
+
+        const ensureSentence = (text) => {
+            const value = String(text || '').trim();
+            if (!value) return '';
+            return /[.!?]$/.test(value) ? value : `${value}.`;
+        };
+
+        if (kind === 'summary') {
+            const namePart = data.fullName ? `${data.fullName.split(' ')[0]} is a` : 'A';
+            const rolePart = data.jobTitle || 'versatile professional';
+            const skillHighlights = skillsArray.slice(0, 3).join(', ');
+            const experienceHint = data.experiences.length ? ` with experience across ${data.experiences.length} role${data.experiences.length > 1 ? 's' : ''}` : '';
+            const closing = skillHighlights ? ` Known for strengths in ${skillHighlights}.` : '';
+            return `${namePart} ${rolePart}${experienceHint}, focused on delivering measurable outcomes and collaborating smoothly with teams.${closing}`;
+        }
+
+        if (kind === 'skills') {
+            const baseSet = new Set(skillsArray.map((s) => s.trim()));
+            const roleSuggestions = [];
+            const addAll = (arr) => {
+                for (const item of arr) {
+                    const trimmed = String(item || '').trim();
+                    if (trimmed) baseSet.add(trimmed);
+                }
+            };
+
+            if (normalizedJob.includes('developer') || normalizedJob.includes('engineer')) {
+                roleSuggestions.push('JavaScript', 'React', 'Node.js', 'API Design', 'Unit Testing', 'Agile Collaboration');
+            }
+            if (normalizedJob.includes('designer')) {
+                roleSuggestions.push('Figma', 'User Research', 'Responsive Layouts', 'Design Systems');
+            }
+            if (normalizedJob.includes('marketing')) {
+                roleSuggestions.push('Campaign Strategy', 'Content Writing', 'SEO', 'Marketing Analytics');
+            }
+            if (normalizedJob.includes('sales')) {
+                roleSuggestions.push('Pipeline Management', 'Negotiation', 'CRM (HubSpot/Salesforce)', 'Lead Qualification');
+            }
+
+            addAll(roleSuggestions);
+            addAll(['Stakeholder Communication', 'Problem Solving', 'Time Management', 'Team Leadership', 'Continuous Improvement']);
+
+            return Array.from(baseSet)
+                .slice(0, 15)
+                .join(', ');
+        }
+
+        if (kind === 'improve') {
+            const defaultBullets = [
+                'Led key deliverables from planning through release to hit deadlines and quality goals.',
+                'Collaborated with cross-functional partners to surface requirements and remove blockers.',
+                'Tracked outcomes with simple metrics to highlight efficiency, quality, or customer impact.'
+            ];
+
+            const firstExp = data.experiences[0];
+            if (!firstExp || !firstExp.description) {
+                return defaultBullets.map((line) => `- ${line}`).join('\n');
+            }
+
+            const verbs = ['Accelerated', 'Optimized', 'Delivered', 'Elevated', 'Streamlined', 'Partnered'];
+            const lines = String(firstExp.description || '')
+                .split(/\r\n|\r|\n/)
+                .map((line) => line.replace(/^[-•]\s*/, '').trim())
+                .filter(Boolean);
+
+            if (!lines.length) {
+                return defaultBullets.map((line) => `- ${line}`).join('\n');
+            }
+
+            const upgraded = lines.map((line, idx) => {
+                const verb = verbs[idx % verbs.length];
+                const neutral = line.charAt(0).toUpperCase() + line.slice(1);
+                return ensureSentence(`${verb} ${neutral}`);
+            });
+
+            return upgraded.map((line) => `- ${line}`).join('\n');
+        }
+
+        const note = 'Demo mode: deploy the backend server and set AI_API_BASE_URL for live AI responses.';
+        const promptSnippet = String(prompt || '').trim();
+        if (!promptSnippet) return note;
+        return `${promptSnippet}\n\n${note}`;
     };
 
     const applySummary = (text) => {
@@ -1193,6 +1366,16 @@ function setupAiAssistant() {
     };
 
     const sendMessage = async ({ kind, prompt }) => {
+        if (aiDemoMode) {
+            pushMessage('user', prompt);
+            const text = buildDemoResponse(kind, prompt);
+            pushMessage('assistant', text);
+            if (kind === 'summary') applySummary(text);
+            if (kind === 'skills') applySkills(text);
+            if (kind === 'improve') applyImprovedExperience(text);
+            return;
+        }
+
         setBusy(true);
         try {
             const context = getAiContext();
@@ -1377,6 +1560,138 @@ function renderSkillsChips() {
     }
 }
 
+const PRIMARY_FIELD_RULES = [
+    {
+        id: 'fullName',
+        label: 'Full Name',
+        validate: (value) => {
+            const trimmed = String(value || '').trim();
+            if (!trimmed) return 'Full Name is required.';
+            if (trimmed.length < 3) return 'Full Name must be at least 3 characters.';
+            return '';
+        }
+    },
+    {
+        id: 'jobTitle',
+        label: 'Job Title',
+        validate: (value) => {
+            const trimmed = String(value || '').trim();
+            if (!trimmed) return 'Job Title is required.';
+            return '';
+        }
+    },
+    {
+        id: 'email',
+        label: 'Email',
+        validate: (value) => {
+            const trimmed = String(value || '').trim();
+            if (!trimmed) return 'Email is required.';
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(trimmed)) return 'Enter a valid email address.';
+            return '';
+        }
+    },
+    {
+        id: 'phone',
+        label: 'Phone',
+        validate: (value) => {
+            const raw = String(value || '').trim();
+            if (!raw) return '';
+            const phonePattern = /^[0-9+()\-\.\s]{7,}$/;
+            if (!phonePattern.test(raw)) {
+                return 'Phone should include digits and allowed symbols only.';
+            }
+            return '';
+        }
+    }
+];
+
+function setFieldErrorState(input, errorMessage) {
+    if (!input) return;
+    const group = input.closest('.form-group');
+    if (!group) return;
+
+    let messageEl = group.querySelector('.input-error-message');
+
+    if (errorMessage) {
+        group.classList.add('has-error');
+        if (!messageEl) {
+            messageEl = document.createElement('div');
+            messageEl.className = 'input-error-message';
+            group.appendChild(messageEl);
+        }
+        messageEl.textContent = errorMessage;
+    } else {
+        group.classList.remove('has-error');
+        if (messageEl) messageEl.remove();
+    }
+}
+
+function validateFieldRule(rule, { showError } = {}) {
+    const input = document.getElementById(rule.id);
+    if (!input) {
+        return { valid: true, error: '' };
+    }
+
+    const errorMessage = rule.validate(input.value);
+    if (showError) {
+        setFieldErrorState(input, errorMessage);
+    }
+
+    return { valid: !errorMessage, error: errorMessage, element: input };
+}
+
+function updateValidationSummary(message) {
+    const summary = document.getElementById('formValidationSummary');
+    if (!summary) return;
+    if (message) {
+        summary.textContent = message;
+        summary.classList.add('is-visible');
+    } else {
+        summary.textContent = '';
+        summary.classList.remove('is-visible');
+    }
+}
+
+function validatePrimaryFields({ showErrors = false, focusFirst = false, updateSummaryBox = false } = {}) {
+    const errors = [];
+    for (const rule of PRIMARY_FIELD_RULES) {
+        const result = validateFieldRule(rule, { showError: showErrors });
+        if (!result.valid) {
+            errors.push({ id: rule.id, message: result.error, element: result.element });
+        }
+    }
+
+    if (updateSummaryBox) {
+        updateValidationSummary(errors[0]?.message || '');
+    }
+
+    if (focusFirst && errors[0]?.element) {
+        errors[0].element.focus();
+    }
+
+    return { valid: errors.length === 0, errors };
+}
+
+function setupFormValidation() {
+    for (const rule of PRIMARY_FIELD_RULES) {
+        const input = document.getElementById(rule.id);
+        if (!input) continue;
+
+        input.addEventListener('blur', () => {
+            validateFieldRule(rule, { showError: true });
+            validatePrimaryFields({ updateSummaryBox: true });
+        });
+
+        input.addEventListener('input', () => {
+            if (input.closest('.form-group')?.classList.contains('has-error')) {
+                validateFieldRule(rule, { showError: true });
+                validatePrimaryFields({ updateSummaryBox: true });
+            }
+        });
+    }
+}
+
 function setupProfilePhotoUpload() {
     const input = document.getElementById('profilePhoto');
     if (!input) return;
@@ -1462,7 +1777,7 @@ function setupProfilePhotoUpload() {
                 scheduleSaveDraft();
                 const preview = document.getElementById('cvPreview');
                 if (preview && preview.querySelector('.cv-header')) {
-                    generateCV();
+                    generateCV({ skipValidation: true });
                 }
             })
             .catch(() => {
@@ -1473,7 +1788,7 @@ function setupProfilePhotoUpload() {
                     scheduleSaveDraft();
                     const preview = document.getElementById('cvPreview');
                     if (preview && preview.querySelector('.cv-header')) {
-                        generateCV();
+                        generateCV({ skipValidation: true });
                     }
                 };
                 reader.readAsDataURL(file);
@@ -1497,6 +1812,10 @@ function loadSampleData() {
 function addExperience() {
     experienceCount++;
     const container = document.getElementById('experienceContainer');
+    if (!container) {
+        console.warn('Missing experience container');
+        return;
+    }
     const item = document.createElement('div');
     item.className = 'experience-item';
     item.id = `experience-${experienceCount}`;
@@ -1528,12 +1847,17 @@ function addExperience() {
         </div>
     `;
     container.appendChild(item);
+    scheduleSaveDraft();
 }
 
 // Add Education
 function addEducation() {
     educationCount++;
     const container = document.getElementById('educationContainer');
+    if (!container) {
+        console.warn('Missing education container');
+        return;
+    }
     const item = document.createElement('div');
     item.className = 'education-item';
     item.id = `education-${educationCount}`;
@@ -1565,13 +1889,17 @@ function addEducation() {
         </div>
     `;
     container.appendChild(item);
+    scheduleSaveDraft();
 }
 
 // Add Course / Certification
 function addCourse() {
     courseCount++;
     const container = document.getElementById('courseContainer');
-    if (!container) return;
+    if (!container) {
+        console.warn('Missing course container');
+        return;
+    }
 
     const item = document.createElement('div');
     item.className = 'course-item';
@@ -1604,12 +1932,103 @@ function addCourse() {
         </div>
     `;
     container.appendChild(item);
+    scheduleSaveDraft();
+}
+
+// Add Project
+function addProject() {
+    projectCount++;
+    const container = document.getElementById('projectContainer');
+    if (!container) {
+        console.warn('Missing project container');
+        return;
+    }
+
+    const item = document.createElement('div');
+    item.className = 'project-item';
+    item.id = `project-${projectCount}`;
+    item.innerHTML = `
+        <button type="button" class="remove-btn" onclick="removeItem('project-${projectCount}')">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="form-group">
+            <label>Project Name</label>
+            <input type="text" class="project-title" placeholder="e.g., Portfolio Website">
+        </div>
+        <div class="form-group">
+            <label>Role / Focus</label>
+            <input type="text" class="project-role" placeholder="e.g., Frontend Developer">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Start</label>
+                <input type="text" class="project-start" placeholder="e.g., Jan 2024">
+            </div>
+            <div class="form-group">
+                <label>End</label>
+                <input type="text" class="project-end" placeholder="e.g., Mar 2024 or Present">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Project Link (Optional)</label>
+            <input type="url" class="project-link" placeholder="https://">
+        </div>
+        <div class="form-group">
+            <label>Description</label>
+            <textarea class="project-description" rows="3" placeholder="Impact, tech stack, achievements..."></textarea>
+        </div>
+    `;
+    container.appendChild(item);
+    scheduleSaveDraft();
+}
+
+// Add Award / Achievement
+function addAward() {
+    awardCount++;
+    const container = document.getElementById('awardContainer');
+    if (!container) {
+        console.warn('Missing award container');
+        return;
+    }
+
+    const item = document.createElement('div');
+    item.className = 'award-item';
+    item.id = `award-${awardCount}`;
+    item.innerHTML = `
+        <button type="button" class="remove-btn" onclick="removeItem('award-${awardCount}')">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="form-group">
+            <label>Award / Achievement</label>
+            <input type="text" class="award-title" placeholder="e.g., Employee of the Year">
+        </div>
+        <div class="form-group">
+            <label>Issuer / Event</label>
+            <input type="text" class="award-issuer" placeholder="e.g., ABC Corp / Hackathon">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Year</label>
+                <input type="text" class="award-year" placeholder="e.g., 2025">
+            </div>
+            <div class="form-group">
+                <label>Details</label>
+                <textarea class="award-description" rows="2" placeholder="What you achieved..."></textarea>
+            </div>
+        </div>
+    `;
+    container.appendChild(item);
+    scheduleSaveDraft();
 }
 
 // Add Language
 function addLanguage() {
     languageCount++;
     const container = document.getElementById('languageContainer');
+    if (!container) {
+        console.warn('Missing language container');
+        return;
+    }
     const item = document.createElement('div');
     item.className = 'language-item';
     item.id = `language-${languageCount}`;
@@ -1635,6 +2054,7 @@ function addLanguage() {
         </div>
     `;
     container.appendChild(item);
+    scheduleSaveDraft();
 }
 
 // Remove Item
@@ -1642,6 +2062,9 @@ function removeItem(id) {
     const item = document.getElementById(id);
     if (item) {
         item.remove();
+        scheduleSaveDraft();
+    } else {
+        console.warn('Attempted to remove missing item', id);
     }
 }
 
@@ -1878,21 +2301,25 @@ function displayReviews() {
 }
 
 // Generate CV
-function generateCV() {
-    const fullName = document.getElementById('fullName').value;
-    const jobTitle = document.getElementById('jobTitle').value;
-    const email = document.getElementById('email').value;
-    const phone = document.getElementById('phone').value;
-    const location = document.getElementById('location').value;
-    const website = document.getElementById('website').value;
-    const summary = document.getElementById('summary').value;
-    const signatureName = document.getElementById('signatureName') ? document.getElementById('signatureName').value : '';
-    const skills = document.getElementById('skills') ? document.getElementById('skills').value : '';
+function generateCV(options = {}) {
+    const { skipValidation = false } = options;
 
-    if (!fullName || !jobTitle || !email) {
-        alert('Please fill in required fields: Full Name, Job Title, and Email');
-        return;
+    if (!skipValidation) {
+        const validation = validatePrimaryFields({ showErrors: true, focusFirst: true, updateSummaryBox: true });
+        if (!validation.valid) return;
+    } else {
+        updateValidationSummary('');
     }
+
+    const fullName = String(document.getElementById('fullName')?.value || '');
+    const jobTitle = String(document.getElementById('jobTitle')?.value || '');
+    const email = String(document.getElementById('email')?.value || '');
+    const phone = String(document.getElementById('phone')?.value || '');
+    const location = String(document.getElementById('location')?.value || '');
+    const website = String(document.getElementById('website')?.value || '');
+    const summary = String(document.getElementById('summary')?.value || '');
+    const signatureName = String(document.getElementById('signatureName')?.value || '');
+    const skills = String(document.getElementById('skills')?.value || '');
 
     const safeFullName = escapeHtml(fullName);
     const safeJobTitle = escapeHtml(jobTitle);
@@ -2077,6 +2504,104 @@ function generateCV() {
         }
     }
 
+    // Projects
+    {
+        const projects = document.querySelectorAll('.project-item');
+        if (projects.length > 0) {
+            let hasProject = false;
+            let projectHTML = '';
+
+            projects.forEach(proj => {
+                const title = proj.querySelector('.project-title')?.value || '';
+                const role = proj.querySelector('.project-role')?.value || '';
+                const link = proj.querySelector('.project-link')?.value || '';
+                const start = proj.querySelector('.project-start')?.value || '';
+                const end = proj.querySelector('.project-end')?.value || '';
+                const description = proj.querySelector('.project-description')?.value || '';
+
+                if (title || description || link) {
+                    hasProject = true;
+                    const safeTitle = escapeHtml(title);
+                    const safeRole = escapeHtml(role);
+                    const safeLink = escapeHtml(link);
+                    const safeStart = escapeHtml(start);
+                    const safeEnd = escapeHtml(end);
+                    const safeDescription = escapeHtmlMultiline(description);
+
+                    const linkHtml = safeLink ? `<a href="${safeLink}" class="cv-project-link" target="_blank" rel="noopener">${safeLink}</a>` : '';
+
+                    projectHTML += `
+                        <div class="cv-project-item">
+                            <div class="cv-item-header">
+                                <div>
+                                    <div class="cv-item-title">${safeTitle}</div>
+                                    <div class="cv-item-company">${safeRole}</div>
+                                    ${linkHtml ? `<div class="cv-item-link">${linkHtml}</div>` : ''}
+                                </div>
+                                <div class="cv-item-date">${safeStart}${(safeStart && safeEnd) ? ' - ' : ''}${safeEnd}</div>
+                            </div>
+                            ${description ? `<p class="cv-item-description">${safeDescription}</p>` : ''}
+                        </div>
+                    `;
+                }
+            });
+
+            if (hasProject) {
+                cvHTML += `
+                    <div class="cv-section">
+                        <h2 class="cv-section-title"><i class="fas fa-diagram-project"></i> Projects</h2>
+                        ${projectHTML}
+                    </div>
+                `;
+            }
+        }
+    }
+
+    // Awards / Achievements
+    {
+        const awards = document.querySelectorAll('.award-item');
+        if (awards.length > 0) {
+            let hasAward = false;
+            let awardHTML = '';
+
+            awards.forEach(award => {
+                const title = award.querySelector('.award-title')?.value || '';
+                const issuer = award.querySelector('.award-issuer')?.value || '';
+                const year = award.querySelector('.award-year')?.value || '';
+                const description = award.querySelector('.award-description')?.value || '';
+
+                if (title || issuer || description) {
+                    hasAward = true;
+                    const safeTitle = escapeHtml(title);
+                    const safeIssuer = escapeHtml(issuer);
+                    const safeYear = escapeHtml(year);
+                    const safeDescription = escapeHtmlMultiline(description);
+                    awardHTML += `
+                        <div class="cv-award-item">
+                            <div class="cv-item-header">
+                                <div>
+                                    <div class="cv-item-title">${safeTitle}</div>
+                                    <div class="cv-item-company">${safeIssuer}</div>
+                                </div>
+                                <div class="cv-item-date">${safeYear}</div>
+                            </div>
+                            ${description ? `<p class="cv-item-description">${safeDescription}</p>` : ''}
+                        </div>
+                    `;
+                }
+            });
+
+            if (hasAward) {
+                cvHTML += `
+                    <div class="cv-section">
+                        <h2 class="cv-section-title"><i class="fas fa-trophy"></i> Achievements & Awards</h2>
+                        ${awardHTML}
+                    </div>
+                `;
+            }
+        }
+    }
+
     // Skills
     {
         const skillsArray = (skillsList && skillsList.length > 0)
@@ -2130,26 +2655,38 @@ function generateCV() {
     }
 
     const preview = document.getElementById('cvPreview');
-    preview.innerHTML = cvHTML;
-    
-    // Apply current style
-    preview.className = `cv-preview ${currentStyle} ${getLayoutClassForStyle(currentStyle)}`;
+    if (!preview) return;
+
+    const signatureMarkup = signatureName && String(signatureName).trim()
+        ? `<div class="cv-signature">${escapeHtml(String(signatureName).trim())}</div>`
+        : '';
+
+    const finalHtml = `${cvHTML}${signatureMarkup}`;
+    const previewClass = `cv-preview ${currentStyle} ${getLayoutClassForStyle(currentStyle)}`.replace(/\s+/g, ' ').trim();
+
+    if (lastPreviewSnapshot.markup === finalHtml && lastPreviewSnapshot.className === previewClass) {
+        return;
+    }
 
     preview.classList.remove('is-animating');
+    preview.className = previewClass;
+    preview.innerHTML = finalHtml;
     void preview.offsetWidth;
     preview.classList.add('is-animating');
 
-    if (signatureName && String(signatureName).trim()) {
-        preview.insertAdjacentHTML('beforeend', `<div class="cv-signature">${escapeHtml(String(signatureName).trim())}</div>`);
-    }
+    lastPreviewSnapshot = { markup: finalHtml, className: previewClass };
 }
 
 // Download PDF
 async function downloadPDF() {
+    const validation = validatePrimaryFields({ showErrors: true, focusFirst: true, updateSummaryBox: true });
+    if (!validation.valid) return;
+
+    generateCV({ skipValidation: true });
+
     const preview = document.getElementById('cvPreview');
-    
-    if (!preview.querySelector('.cv-header')) {
-        alert('Please generate a CV preview first!');
+    if (!preview || !preview.querySelector('.cv-header')) {
+        updateValidationSummary('Click "Preview CV" before downloading your PDF.');
         return;
     }
     
@@ -2196,7 +2733,82 @@ async function downloadPDF() {
     await new Promise(requestAnimationFrame);
     await new Promise(requestAnimationFrame);
 
-    window.print();
+    const stylesheets = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+        .map((link) => link.href)
+        .filter((href) => !!href);
+
+    const printWindow = window.open('', '_blank', 'noopener');
+    if (!printWindow || printWindow.closed) {
+        window.print();
+        return;
+    }
+
+    const serializedHtml = preview.innerHTML;
+    const previewClass = preview.className || 'cv-preview';
+    const doc = printWindow.document;
+
+    const inlineStyles = `
+        body {
+            margin: 0;
+            padding: 24px 0;
+            background: #f8fafc;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .print-wrapper {
+            width: 100%;
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+        @page {
+            size: A4;
+            margin: 12mm;
+        }
+        @media print {
+            body {
+                background: transparent;
+                padding: 0;
+            }
+            .print-wrapper {
+                padding: 0;
+            }
+        }
+    `;
+
+    const linksHtml = stylesheets
+        .map((href) => `<link rel="stylesheet" href="${href}">`)
+        .join('');
+
+    doc.open();
+    doc.write(`<!DOCTYPE html><html><head><meta charset="utf-8">${linksHtml}<style>${inlineStyles}</style><title>CV Export</title></head><body><div class="print-wrapper"><div class="${previewClass}">${serializedHtml}</div></div></body></html>`);
+    doc.close();
+
+    const finishPrint = () => {
+        try {
+            printWindow.focus();
+            printWindow.print();
+        } catch {
+            try {
+                window.print();
+            } catch {
+                // ignore
+            }
+        }
+        setTimeout(() => {
+            try {
+                printWindow.close();
+            } catch {
+                // ignore
+            }
+        }, 800);
+    };
+
+    if (doc.fonts && doc.fonts.ready) {
+        doc.fonts.ready.then(finishPrint).catch(finishPrint);
+    } else {
+        printWindow.addEventListener('load', finishPrint, { once: true });
+        setTimeout(finishPrint, 1200);
+    }
 }
 
 // Clear Form
@@ -2217,33 +2829,63 @@ function clearForm() {
         renderSkillsChips();
         
         // Clear dynamic sections
-        document.getElementById('experienceContainer').innerHTML = '';
-        document.getElementById('educationContainer').innerHTML = '';
+        const expContainer = document.getElementById('experienceContainer');
+        if (expContainer) expContainer.innerHTML = '';
+        const eduContainer = document.getElementById('educationContainer');
+        if (eduContainer) eduContainer.innerHTML = '';
         const courseContainer = document.getElementById('courseContainer');
         if (courseContainer) courseContainer.innerHTML = '';
-        document.getElementById('languageContainer').innerHTML = '';
+        const projectContainer = document.getElementById('projectContainer');
+        if (projectContainer) projectContainer.innerHTML = '';
+        const awardContainer = document.getElementById('awardContainer');
+        if (awardContainer) awardContainer.innerHTML = '';
+        const langContainer = document.getElementById('languageContainer');
+        if (langContainer) langContainer.innerHTML = '';
         
         // Reset counters
         experienceCount = 0;
         educationCount = 0;
         courseCount = 0;
+        projectCount = 0;
+        awardCount = 0;
         languageCount = 0;
         
         // Add one of each back
         addExperience();
         addEducation();
         addCourse();
+        addProject();
+        addAward();
         addLanguage();
         
         // Clear preview
-        document.getElementById('cvPreview').innerHTML = `
+        const preview = document.getElementById('cvPreview');
+        if (preview) {
+            preview.innerHTML = `
             <div class="empty-state">
                 <i class="fas fa-file-alt"></i>
-                <p>Your CV preview will appear here</p>
-                <p class="hint">Fill in the form and click "Preview CV"</p>
+                <p>Start entering your details to see a live CV preview.</p>
+                <p class="hint">Click "Preview CV" anytime to refresh the look.</p>
             </div>
-        `;
+            `;
+        }
 
         clearCvDraft();
     }
 }
+
+Object.assign(window, {
+    addExperience,
+    addEducation,
+    addCourse,
+    addProject,
+    addAward,
+    addLanguage,
+    removeItem,
+    generateCV,
+    downloadPDF,
+    clearForm,
+    toggleStyleGrid,
+    toggleReviews,
+    openExternalLink
+});

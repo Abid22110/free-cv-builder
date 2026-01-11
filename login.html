@@ -529,12 +529,8 @@
             </button>
 
             <div class="divider">
-                <span>or</span>
+                <span>Sign in with your local account</span>
             </div>
-
-            <button type="button" class="btn-google" id="googleBtn">
-                <i class="fab fa-google"></i> Continue with Google
-            </button>
 
             <div class="auth-footer">
                 <p>Don't have an account? <a href="#" id="signupLink">Sign up</a></p>
@@ -705,25 +701,12 @@
             </p>
         </div>
 
-        <div class="setup-panel" id="firebaseSetupPanel">
-            <h3>Enable Login (1-time Setup)</h3>
+        <div class="setup-panel" id="localInfoPanel">
+            <h3>About Local Sign-In</h3>
             <p>
-                Paste your Firebase <b>Web App config</b> here. It will be saved in your browser (localStorage).
-                This is safe to use on GitHub Pages.
+                Accounts stay in this browser only. Clear site data = sign out everywhere, so export your CV regularly.
             </p>
-            <textarea id="firebaseConfigTextarea" placeholder='{
-  "apiKey": "...",
-  "authDomain": "...",
-  "projectId": "...",
-  "appId": "..."
-}'></textarea>
-            <div class="setup-actions">
-                <button type="button" class="btn-login" id="saveFirebaseConfigBtn">
-                    <i class="fas fa-save"></i> Save Config
-                </button>
-                <a class="btn-login" href="https://console.firebase.google.com/" target="_blank" rel="noreferrer" style="text-decoration:none;">
-                    <i class="fas fa-arrow-up-right-from-square"></i> Open Firebase Console
-                </a>
+            <div class="setup-actions" style="gap: 10px;">
                 <a class="btn-login" id="continueGuestLink" href="index.html" style="text-decoration:none; background: linear-gradient(135deg, #64748b, #94a3b8);">
                     <i class="fas fa-user"></i> Continue as Guest
                 </a>
@@ -737,152 +720,126 @@
         </div>
     </div>
 
-    <!-- Firebase Auth (required for login) -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="firebase-config.js?v=20260104-7"></script>
-    <script src="app-config.js?v=20260104-7"></script>
-    <script src="config.js"></script>
-
+    <script src="local-auth.js?v=20260111-1"></script>
     <script>
-        function getSafeNextUrl() {
-            try {
-                const params = new URLSearchParams(window.location.search);
-                const next = String(params.get('next') || '').trim();
-                if (!next) return 'index.html';
-                if (/^javascript:/i.test(next)) return 'index.html';
-                if (next.includes('://') || next.startsWith('//')) return 'index.html';
-                return next;
-            } catch {
-                return 'index.html';
-            }
-        }
+        (function () {
+            const getSafeNextUrl = () => {
+                try {
+                    const params = new URLSearchParams(window.location.search);
+                    const next = String(params.get('next') || '').trim();
+                    if (!next) return 'index.html';
+                    if (/^javascript:/i.test(next)) return 'index.html';
+                    if (next.includes('://') || next.startsWith('//')) return 'index.html';
+                    return next;
+                } catch (err) {
+                    return 'index.html';
+                }
+            };
 
-        function showError(message) {
             const errorEl = document.getElementById('errorMessage');
-            errorEl.textContent = message;
-            errorEl.classList.add('show');
-        }
+            const loginBtn = document.getElementById('loginBtn');
+            const signupLink = document.getElementById('signupLink');
+            const continueGuestLink = document.getElementById('continueGuestLink');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const form = document.querySelector('.login-form');
 
-        function hideError() {
-            document.getElementById('errorMessage').classList.remove('show');
-        }
+            const showError = (message) => {
+                if (!errorEl) return;
+                errorEl.textContent = message;
+                errorEl.classList.add('show');
+            };
 
-        // Check if Firebase is configured
-        function isFirebaseConfigured() {
-            const cfg = window.FIREBASE_CONFIG;
-            return cfg && cfg.apiKey && String(cfg.apiKey) !== 'REPLACE_ME';
-        }
+            const clearError = () => {
+                if (!errorEl) return;
+                errorEl.classList.remove('show');
+                errorEl.textContent = '';
+            };
 
-        // Initialize Firebase if configured
-        if (isFirebaseConfigured()) {
-            if (!firebase.apps || !firebase.apps.length) {
-                firebase.initializeApp(window.FIREBASE_CONFIG);
+            const localAuth = window.LocalAuth;
+            if (!localAuth) {
+                showError('Local accounts are unavailable in this browser.');
+                loginBtn.disabled = true;
+                return;
             }
 
-            const auth = firebase.auth();
-
-            // Handle form submission (email/password login)
-            document.querySelector('.login-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                hideError();
-
-                const email = document.getElementById('email').value.trim();
-                const password = document.getElementById('password').value.trim();
-                const loginBtn = document.getElementById('loginBtn');
-
-                if (!email || !password) {
-                    showError('Please enter both email and password');
-                    return;
-                }
-
-                loginBtn.disabled = true;
-                loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
-
+            const autoFillEmail = () => {
                 try {
-                    await auth.signInWithEmailAndPassword(email, password);
-                    window.location.href = getSafeNextUrl();
-                } catch (error) {
-                    let message = 'Login failed. Please try again.';
-                    if (error.code === 'auth/user-not-found') {
-                        message = 'No account found with this email. Try signing up first.';
-                    } else if (error.code === 'auth/wrong-password') {
-                        message = 'Incorrect password. Please try again.';
-                    } else if (error.code === 'auth/invalid-email') {
-                        message = 'Please enter a valid email address.';
+                    const params = new URLSearchParams(window.location.search);
+                    const email = params.get('email');
+                    if (email && emailInput) {
+                        emailInput.value = email;
+                        emailInput.focus();
                     }
-                    showError(message);
-                } finally {
-                    loginBtn.disabled = false;
-                    loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+                } catch (err) {
+                    // ignore
                 }
-            });
+            };
 
-            // Handle Google sign-in
-            document.getElementById('googleBtn').addEventListener('click', async () => {
-                hideError();
+            const setBusy = (busy) => {
+                if (!loginBtn) return;
+                loginBtn.disabled = !!busy;
+                loginBtn.innerHTML = busy
+                    ? '<i class="fas fa-spinner fa-spin"></i> Signing in...'
+                    : '<i class="fas fa-sign-in-alt"></i> Sign In';
+            };
 
-                try {
-                    const provider = new firebase.auth.GoogleAuthProvider();
-                    await auth.signInWithPopup(provider);
-                    window.location.href = getSafeNextUrl();
-                } catch (error) {
-                    if (error.code !== 'auth/popup-closed-by-user') {
-                        showError('Google sign-in failed. Please try again.');
+            if (form) {
+                form.addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    clearError();
+
+                    const email = String(emailInput?.value || '').trim();
+                    const password = String(passwordInput?.value || '').trim();
+
+                    if (!email || !password) {
+                        showError('Please enter both email and password.');
+                        return;
                     }
-                }
-            });
 
-            // Handle sign up link (create account)
-            document.getElementById('signupLink').addEventListener('click', async (e) => {
-                e.preventDefault();
-                hideError();
-
-                const email = document.getElementById('email').value.trim();
-                const password = document.getElementById('password').value.trim();
-
-                if (!email || !password) {
-                    showError('Please enter email and password to create account');
-                    return;
-                }
-
-                if (password.length < 6) {
-                    showError('Password must be at least 6 characters');
-                    return;
-                }
-
-                try {
-                    await auth.createUserWithEmailAndPassword(email, password);
-                    window.location.href = getSafeNextUrl();
-                } catch (error) {
-                    let message = 'Account creation failed. Please try again.';
-                    if (error.code === 'auth/email-already-in-use') {
-                        message = 'An account with this email already exists. Try signing in instead.';
-                    } else if (error.code === 'auth/weak-password') {
-                        message = 'Password is too weak. Please choose a stronger password.';
+                    setBusy(true);
+                    try {
+                        await localAuth.signIn({ email, password });
+                        window.location.href = getSafeNextUrl();
+                    } catch (err) {
+                        const code = err?.code || 'unknown';
+                        const messages = {
+                            'missing-credentials': 'Email and password are required.',
+                            'invalid-email': 'Enter a valid email address.',
+                            'user-not-found': 'No account found with this email. Try signing up first.',
+                            'wrong-password': 'Incorrect password. Please try again.',
+                            default: 'Login failed. Please try again.'
+                        };
+                        showError(messages[code] || messages.default);
+                    } finally {
+                        setBusy(false);
                     }
-                    showError(message);
-                }
-            });
+                });
+            }
 
-            // Auto-redirect if already signed in
-            auth.onAuthStateChanged((user) => {
-                if (user) {
+            if (signupLink) {
+                signupLink.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    const email = encodeURIComponent(String(emailInput?.value || '').trim());
+                    window.location.href = `signup.html?email=${email}`;
+                });
+            }
+
+            if (continueGuestLink) {
+                continueGuestLink.addEventListener('click', (event) => {
+                    event.preventDefault();
                     window.location.href = getSafeNextUrl();
-                }
-            });
+                });
+            }
 
-        } else {
-            // Firebase not configured - show setup message
-            showError('Login is not configured yet. Please contact the administrator.');
-            document.getElementById('loginBtn').disabled = true;
-            document.getElementById('googleBtn').disabled = true;
-        }
+            const existing = localAuth.getCurrentUser();
+            if (existing) {
+                window.location.href = getSafeNextUrl();
+                return;
+            }
 
-        // Continue as guest
-        document.getElementById('continueGuestLink').addEventListener('click', () => {
-            window.location.href = getSafeNextUrl();
-        });
+            autoFillEmail();
+        })();
     </script>
 </body>
 </html>

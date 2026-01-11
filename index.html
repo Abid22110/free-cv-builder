@@ -11,16 +11,22 @@
 <body>
     <div class="container">
         <header>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
+            <div class="header-bar">
+                <div class="header-info">
                     <h1><i class="fas fa-file-alt"></i> Free CV Builder</h1>
                     <p>Fill in the blanks, get AI help, pick a template, and download in minutes</p>
                 </div>
-                <div style="display: flex; align-items: center; gap: 12px; opacity: 0.95; font-weight: 600; flex-wrap: wrap; justify-content: flex-end;">
-                    <span id="authStatusText" style="color: #10b981;">
+                <div class="header-actions">
+                    <span id="authStatusText" class="header-status">
                         <i class="fas fa-robot"></i> AI Helper Ready
                     </span>
-                    <span style="font-size: 0.9rem; color: #64748b;">
+                    <a id="authSignInLink" href="login.html" class="header-pill header-pill--signin">
+                        <i class="fas fa-user"></i> Sign In
+                    </a>
+                    <button type="button" id="authSignOutBtn" class="header-pill header-pill--signout" style="display: none;">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                    </button>
+                    <span class="header-hint">
                         Start filling your CV below →
                     </span>
                 </div>
@@ -153,6 +159,24 @@
                 </div>
 
                 <div class="form-card">
+                    <h2><i class="fas fa-diagram-project"></i> Projects</h2>
+                    <p class="ai-subtitle">Showcase impact, tech stack, and links.</p>
+                    <div id="projectContainer"></div>
+                    <button type="button" class="add-btn" onclick="addProject()">
+                        <i class="fas fa-plus"></i> Add Project
+                    </button>
+                </div>
+
+                <div class="form-card">
+                    <h2><i class="fas fa-trophy"></i> Achievements / Awards</h2>
+                    <p class="ai-subtitle">Spotlight wins, certifications, competitions.</p>
+                    <div id="awardContainer"></div>
+                    <button type="button" class="add-btn" onclick="addAward()">
+                        <i class="fas fa-plus"></i> Add Achievement
+                    </button>
+                </div>
+
+                <div class="form-card">
                     <h2><i class="fas fa-cogs"></i> Skills</h2>
                     <div class="form-group">
                         <label for="skillsInput">Enter skills (press Enter / comma)</label>
@@ -211,6 +235,8 @@
                         </div>
                     </div>
                 </div>
+
+                <div id="formValidationSummary" class="form-validation-summary" role="alert" aria-live="polite"></div>
 
                 <div class="wizard-nav">
                     <button type="button" class="btn-primary" id="wizardNext1">
@@ -273,8 +299,17 @@
             <!-- Preview Section -->
             <div class="preview-section">
                 <div class="preview-header">
-                    <h3><i class="fas fa-file-pdf"></i> CV Preview & Templates</h3>
-                    <div style="display: flex; align-items: center; gap: 15px;">
+                    <div class="preview-title">
+                        <h3><i class="fas fa-file-pdf"></i> CV Preview & Templates</h3>
+                        <span class="preview-badge">Live ATS view</span>
+                    </div>
+                    <div class="preview-toolbar">
+                        <div class="zoom-control" aria-label="Preview zoom">
+                            <i class="fas fa-magnifying-glass-minus"></i>
+                            <input type="range" id="previewZoomRange" min="80" max="130" step="5" value="100" aria-label="Zoom">
+                            <i class="fas fa-magnifying-glass-plus"></i>
+                            <span id="previewZoomLabel" class="zoom-label">100%</span>
+                        </div>
                         <button onclick="toggleStyleGrid()" class="style-toggle-btn">
                             <i class="fas fa-th"></i> Show All Styles
                         </button>
@@ -290,11 +325,13 @@
                     <div id="styleGrid" class="style-grid"></div>
                 </div>
                 
-                <div id="cvPreview" class="cv-preview">
-                    <div class="empty-state">
-                        <i class="fas fa-file-alt"></i>
-                        <p>Your CV preview will appear here</p>
-                        <p class="hint">Fill in the form and click "Preview CV"</p>
+                <div class="preview-canvas" id="previewCanvas">
+                    <div id="cvPreview" class="cv-preview">
+                        <div class="empty-state">
+                            <i class="fas fa-file-alt"></i>
+                            <p>Start entering your details to see a live CV preview.</p>
+                            <p class="hint">Click "Preview CV" anytime to refresh the look.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -390,9 +427,14 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Development: Test Suite (remove for production) -->
+    <script src="test-premium.js"></script>
     <script src="firebase-config.js?v=20260104-8"></script>
     <script src="app-config.js?v=20260104-8"></script>
     <script src="config.js"></script>
+
+    <script src="local-auth.js?v=20260111-1"></script>
 
     <script src="app.js?v=20260104-8"></script>
 

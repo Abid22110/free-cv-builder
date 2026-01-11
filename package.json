@@ -25,6 +25,7 @@
     "openai": "^4.28.0"
   },
   "devDependencies": {
+    "jsdom": "^23.2.0",
     "nodemon": "^3.0.1"
   }
 }
