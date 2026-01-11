@@ -2264,9 +2264,8 @@ function selectStyle(styleId) {
     void preview.offsetWidth;
     preview.classList.add('is-animating');
     
-    // Show notification
+    // Update badge with selected template name
     const templateName = cvTemplates.find(t => t.id === styleId).name;
-    console.log('Selected template:', templateName);
 
     updateCvThemeBadge();
 
