@@ -1648,7 +1648,7 @@ footer i.fa-heart {
     }
 
     /* Print ONLY the CV preview (avoid absolute/visibility hacks that can print blank) */
-    header, footer, .form-section, .preview-header, .style-grid-container, .stats-section, .reviews-section, #aiAssistantCard {
+    header, footer, .form-section, .preview-header, .style-grid-container, .stats-section, .reviews-section, #aiAssistantCard, .ai-helper {
         display: none !important;
     }
 
