@@ -6,6 +6,10 @@
     box-sizing: border-box;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 :root {
     --primary-color: #2563eb;
     --secondary-color: #3b82f6;
@@ -305,6 +309,46 @@ label {
 
 .form-group.required input {
     background: linear-gradient(180deg, rgba(37, 99, 235, 0.06), rgba(255, 255, 255, 0));
+}
+
+/* Help Tips */
+.help-tip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: help;
+    margin-left: 6px;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+}
+
+.help-tip:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Character Counter */
+.char-counter {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    text-align: right;
+    margin-top: 4px;
+}
+
+.char-counter.warning {
+    color: #f59e0b;
+}
+
+.char-counter.danger {
+    color: var(--danger);
+    font-weight: 600;
 }
 
 input::placeholder, textarea::placeholder {
@@ -1616,6 +1660,42 @@ footer i.fa-heart {
         text-align: left;
         font-size: 0.85rem;
     }
+}
+
+/* Toast Notifications */
+.toast-notification {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    padding: 16px 24px;
+    background: rgba(15, 23, 42, 0.95);
+    color: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    font-size: 0.95rem;
+    font-weight: 500;
+    z-index: 10000;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+}
+
+.toast-notification.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast-notification.toast-success {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.toast-notification.toast-error {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.toast-notification.toast-info {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
 }
 
 /* Print Styles */

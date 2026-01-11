@@ -683,6 +683,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     safeRun('setupPreviewZoom', setupPreviewZoom);
     safeRun('setupAuthUi', setupAuthUi);
     safeRun('setupQuickSetup', setupQuickSetup);
+    safeRun('setupKeyboardShortcuts', setupKeyboardShortcuts);
 
     // Restore a saved draft if present.
     safeRun('loadCvDraft', loadCvDraft);
@@ -1004,6 +1005,55 @@ function setupPreviewZoom() {
 
     range.addEventListener('input', () => applyScale(range.value));
     applyScale(range.value || 100);
+}
+
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        // Ctrl/Cmd + S: Save draft manually
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            saveCvDraft();
+            showToast('Draft saved!', 'success');
+            return;
+        }
+
+        // Ctrl/Cmd + P: Preview/Generate CV
+        if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+            e.preventDefault();
+            generateCV();
+            return;
+        }
+
+        // Ctrl/Cmd + D: Download PDF
+        if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+            e.preventDefault();
+            downloadPDF();
+            return;
+        }
+
+        // Ctrl/Cmd + K: Clear form (with confirmation)
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            clearForm();
+            return;
+        }
+    });
+}
+
+function showToast(message, type = 'info') {
+    const existingToast = document.querySelector('.toast-notification');
+    if (existingToast) existingToast.remove();
+
+    const toast = document.createElement('div');
+    toast.className = `toast-notification toast-${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 }
 
 function setupAiAssistant() {
@@ -1690,6 +1740,33 @@ function setupFormValidation() {
             }
         });
     }
+
+    // Character counter for summary
+    setupCharacterCounter('summary', 'summaryCounter', 500);
+}
+
+function setupCharacterCounter(textareaId, counterId, maxLength) {
+    const textarea = document.getElementById(textareaId);
+    const counter = document.getElementById(counterId);
+    
+    if (!textarea || !counter) return;
+
+    const updateCounter = () => {
+        const length = textarea.value.length;
+        counter.textContent = length;
+        
+        const parent = counter.parentElement;
+        parent.classList.remove('warning', 'danger');
+        
+        if (length > maxLength * 0.9) {
+            parent.classList.add('danger');
+        } else if (length > maxLength * 0.75) {
+            parent.classList.add('warning');
+        }
+    };
+
+    textarea.addEventListener('input', updateCounter);
+    updateCounter();
 }
 
 function setupProfilePhotoUpload() {
