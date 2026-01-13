@@ -2354,16 +2354,6 @@ footer i.fa-heart {
     align-items: flex-end;
 }
 
-.ai-composer textarea {
-    flex: 1;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 8px 12px;
-    resize: none;
-    font-family: inherit;
-    font-size: 0.9rem;
-}
-
 .ai-composer textarea:focus {
     outline: none;
     border-color: var(--primary-color);
